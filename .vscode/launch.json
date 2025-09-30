@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Netbox",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "port": 3000,
+                "host": "127.0.0.1"
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/netbox_panorama_configpump_plugin",
+                    "remoteRoot": "/opt/netbox_panorama_configpump_plugin/netbox_panorama_configpump_plugin"
+                }
+            ]
+        }
+    ]
+}

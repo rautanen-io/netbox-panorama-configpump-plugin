@@ -1,0 +1,55 @@
+[tool.poetry]
+name =  "netbox-panorama-configpump-plugin"
+version = "0.0.1"
+description = "A NetBox plugin that synchronizes Palo Alto Networks Panorama configuration from NetBox data using a pull, diff and push workflow."
+authors = ["Veikko Pankakoski <veikko@rautanen.io>", "Jaakko Rautanen <jaakko@rautanen.io>"]
+license = "Apache-2.0"
+readme = "README.md"
+packages = [{ include = "netbox_panorama_configpump_plugin" }]
+homepage = "https://rautanen.io"
+repository = "https://github.com/rautanen-io/netbox-panorama-configpump-plugin"
+documentation = "https://github.com/rautanen-io/netbox-panorama-configpump-plugin"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: Apache-2.0 License",
+  "Operating System :: OS Independent",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+lxml = "^4.9.3"
+xmldiff = "^2.7.0"
+
+[tool.poetry.group.debug.dependencies]
+debugpy = "^1.8"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.5"
+black = "^25.1.0"
+pre-commit = "^4.2.0"
+ruff = "^0.12.12"
+
+[tool.poetry.group.dev.dependencies]
+django = "5.1.8"
+jinja2 = "3.1.6"
+django-taggit = "6.1.0"
+django-tables2 = "2.7.5"
+djangorestframework = "3.16.0"
+django-filter = "25.1"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88
+fix = true
+
+[tool.ruff.lint]
+select = ["F401", "I"]  # F401 = unused imports, I = isort
+
+[tool.black]
+line-length = 88
+
+[tool.pylint.format]
+max-line-length = 88

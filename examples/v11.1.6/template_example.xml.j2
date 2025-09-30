@@ -1,0 +1,61 @@
+<config version="11.1.0" urldb="paloaltonetworks" detail-version="11.1.6">
+    <devices>
+        <entry name="localhost.localdomain">
+            <template>
+                <entry name="MyTemplate1">
+                    <config>
+                        <devices>
+                            <entry name="localhost.localdomain">
+                                <network>
+                                    <interface>
+                                        <ethernet>
+                                            {%-   for interface in device.interfaces.exclude(type="virtual").filter(name__startswith="ethernet") %}
+                                            <entry name="{{ interface.name }}">
+                                                <layer3>
+                                                    <units>
+                                                        {%-   for child_interface in dcim.Interface.objects.filter(parent=interface) %}
+                                                        <entry name="{{ child_interface.name }}">
+                                                            <sdwan-link-settings>
+                                                                <upstream-nat>
+                                                                    <enable>no</enable>
+                                                                    <static-ip />
+                                                                </upstream-nat>
+                                                                <enable>no</enable>
+                                                                <ipv6-enable>no</ipv6-enable>
+                                                            </sdwan-link-settings>
+                                                            <ndp-proxy>
+                                                                <enabled>no</enabled>
+                                                            </ndp-proxy>
+                                                            <adjust-tcp-mss>
+                                                                <enable>no</enable>
+                                                            </adjust-tcp-mss>
+                                                            {%- if child_interface.untagged_vlan %}
+                                                            <tag>{{ child_interface.untagged_vlan.vid }}</tag>
+                                                            {%- endif %}
+                                                        </entry>
+                                                        {%-   endfor %}
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            {%-   endfor %}
+                                        </ethernet>
+                                    </interface>
+                                </network>
+                            </entry>
+                        </devices>
+                    </config>
+                </entry>
+            </template>
+            <device-group>
+                <entry name="MyDeviceGroup1">
+                    <devices />
+                    <address>
+                        <entry name="test1">
+                            <ip-netmask>1.1.1.1</ip-netmask>
+                        </entry>
+                    </address>
+                </entry>
+            </device-group>
+        </entry>
+    </devices>
+</config>

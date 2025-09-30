@@ -1,0 +1,67 @@
+
+{% extends 'generic/object.html' %}
+{% load render_table from django_tables2 %}
+{% load helpers %}
+
+{% block content %}
+  <div class="row mb-3">
+    <div class="col col-md-6">
+      <div class="card">
+
+        <h5 class="card-header">Panorama Connection Template</h5>
+
+        <table class="table table-hover attr-table">
+          <tr>
+            <th scope="row">Name</th>
+            <td>{{ object.name }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Panorama base URL</th>
+            <td>
+              {% if object.panorama_url %}
+                <a href="{{ object.panorama_url }}" target="_blank" rel="noopener">{{ object.panorama_url }}</a>
+              {% else %}
+                <span class="text-muted">None</span>
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Token Key</th>
+            <td>{% if object.token_key %}{{ object.token_key }}{% else %}<span class="text-muted">None</span>{% endif %}</td>
+          </tr>
+          <tr>
+            <th scope="row">File Name Prefix</th>
+            <td>{% if object.file_name_prefix %}{{ object.file_name_prefix }}{% else %}<span class="text-muted">None</span>{% endif %}</td>
+          </tr>
+          <tr>
+            <th scope="row">Request Timeout</th>
+            <td>{% if object.request_timeout %}{{ object.request_timeout }}{% else %}<span class="text-muted">Default</span>{% endif %}</td>
+          </tr>
+          <tr>
+            <th scope="row">Platforms</th>
+            <td>
+              {% with platforms=object.platforms.all %}
+                {% if platforms %}
+                  {% for platform in platforms %}
+                    <a href="{{ platform.get_absolute_url }}">{{ platform }}</a>{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted">None</span>
+                {% endif %}
+              {% endwith %}
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Description</th>
+            <td>{{ object.description|placeholder }}</td>
+          </tr>
+        </table>
+      </div>
+      {% include 'inc/panels/custom_fields.html' %}
+    </div>
+    <div class="col col-md-6">
+      {% include 'inc/panels/tags.html' %}
+      {% include 'inc/panels/comments.html' %}
+    </div>
+  </div>
+{% endblock content %}

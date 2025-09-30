@@ -1,0 +1,141 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load static %}
+
+{% block content %}
+    <div class="row">
+        <div class="col col-12 col-xl-6">
+            <div class="card">
+                <h2 class="card-header">Device Config Sync Status</h2>
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">Device</th>
+                        <td>{{ object.device|linkify }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Connection</th>
+                        <td>{{ object.connection|linkify }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Lines Added</th>
+                        <td>
+                            {% if object.lines_added > 0 %}
+                                <span class="badge text-bg-success">{{ object.lines_added }}</span>
+                            {% else %}
+                                <span class="text-muted">{{ object.lines_added }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Lines Removed</th>
+                        <td>
+                            {% if object.lines_removed > 0 %}
+                                <span class="badge text-bg-danger">{{ object.lines_removed }}</span>
+                            {% else %}
+                                <span class="text-muted">{{ object.lines_removed }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Lines Changed</th>
+                        <td>
+                            {% if object.lines_changed > 0 %}
+                                <span class="badge text-bg-info">{{ object.lines_changed }}</span>
+                            {% else %}
+                                <span class="text-muted">{{ object.lines_changed }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Config Render OK</th>
+                        <td>
+                            {% if object.config_render_ok %}
+                                <span class="badge text-bg-success">Yes</span>
+                            {% else %}
+                                <span class="badge text-bg-danger">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Last Pull</th>
+                        <td>
+                            {% if object.last_pull %}
+                                {{ object.last_pull|date:"Y-m-d H:i:s" }}
+                            {% else %}
+                                <span class="text-muted">Never</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Last Push</th>
+                        <td>
+                            {% if object.last_push %}
+                                {{ object.last_push|date:"Y-m-d H:i:s" }}
+                            {% else %}
+                                <span class="text-muted">Never</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Latest Sync Job</th>
+                        <td>
+                            {% if object.sync_job %}
+                                {{ object.sync_job|linkify }}
+                            {% else %}
+                                <span class="text-muted">None</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="col col-12 col-xl-6">
+            {% include 'inc/panels/custom_fields.html' %}
+            {% include 'inc/panels/tags.html' %}
+            {% include 'inc/panels/comments.html' %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center w-100">
+                        <h2 class="card-header mb-0 flex-grow-1">Panorama Configuration</h2>
+                    </div>
+                </div>
+                <div class="card-body" style="height: 500px;">
+                    <div id="monaco-editor" style="width: 100%; height: 100%; border: 1px solid #ddd;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block javascript %}
+    {{ block.super }}
+    <!-- Monaco Editor loader -->
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
+    <script>
+        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' }});
+        require(["vs/editor/editor.main"], function () {
+            // Get theme from localStorage, fallback to 'vs' (white theme)
+            const theme = localStorage.getItem('monaco-editor-theme') || 'vs';
+
+            monaco.editor.create(document.getElementById('monaco-editor'), {
+                value: `{{ object.panorama_configuration|escapejs }}`,
+                language: "xml",
+                theme: theme,
+                readOnly: true,
+                renderSideBySide: true,
+                originalEditable: false,
+                renderWhitespace: 'boundary',
+                diffWordWrap: 'on',
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                lineNumbers: 'on',
+                wordWrap: 'on',
+                matchBrackets: 'always'
+            });
+        });
+    </script>
+{% endblock %}

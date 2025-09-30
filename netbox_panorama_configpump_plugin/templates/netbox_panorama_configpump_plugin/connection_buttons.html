@@ -1,0 +1,18 @@
+<div class="dropdown">
+  <button type="button" class="btn {{ color }} dropdown-toggle" data-bs-toggle="dropdown">
+    <i class="mdi mdi-water-pump"></i> {{ label }}
+  </button>
+
+  <ul class="dropdown-menu">
+    {% for button in buttons %}
+      {% if button.divider %}
+        <li><hr class="dropdown-divider"></li>
+      {% endif %}
+      <li>
+        <a href="{% url 'plugins:netbox_panorama_configpump_plugin:'|add:button.uri pk=button.pk %}" class="dropdown-item" role="button">
+          <i class="mdi {{ button.icon }}"></i> {{ button.text }}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</div>

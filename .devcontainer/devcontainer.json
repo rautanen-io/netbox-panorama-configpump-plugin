@@ -1,0 +1,96 @@
+{
+    "containerEnv": {
+        "NETBOX_VERSION": "4.3.7"
+    },
+    "build": {
+        "dockerfile": "./Dockerfile",
+        "context": "."
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": "true",
+            "username": "vscode",
+            "userUid": "1000",
+            "userGid": "1000",
+            "upgradePackages": "true"
+        },
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+        "ghcr.io/devcontainers/features/git:1": {
+            "version": "latest",
+            "ppa": "false"
+        },
+        "ghcr.io/devcontainers/features/python:1": {
+            "toolsToInstall": "flake8,autopep8,black,yapf,mypy,pydocstyle,pycodestyle,bandit,pipenv,virtualenv,pytest,pylint,poetry"
+        }
+    },
+    "portsAttributes": {
+        "3000": {
+            "label": "Debugger",
+            "onAutoForward": "silent"
+        },
+        "8000": {
+            "label": "Netbox",
+            "onAutoForward": "openBrowser"
+        },
+        "*": {
+            "onAutoForward": "ignore"
+        }
+    },
+    "forwardPorts": [
+        3000,
+        8000
+    ],
+    "otherPortsAttributes": {
+        "onAutoForward": "ignore"
+    },
+    "postCreateCommand": [
+        "bash",
+        "-c",
+        "poetry config virtualenvs.create true && poetry config virtualenvs.in-project false && poetry install && rm -rf .netbox && git clone https://github.com/netbox-community/netbox.git .netbox && cd .netbox && git checkout tags/v${NETBOX_VERSION:-v4.3.7} -b v${NETBOX_VERSION:-v4.3.7} && cd .. && echo 'Setup complete!'"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "charliermarsh.ruff",
+                "eamodio.gitlens",
+                "mechatroner.rainbow-csv",
+                "ms-azuretools.vscode-containers",
+                "ms-azuretools.vscode-docker",
+                "ms-python.black-formatter",
+                "ms-python.debugpy",
+                "ms-python.isort",
+                "ms-python.pylint",
+                "ms-python.python",
+                "ms-vscode.makefile-tools",
+                "samuelcolvin.jinjahtml"
+            ],
+            "settings": {
+                "remote.autoForwardPorts": false,
+                "python.defaultInterpreterPath": "./.venv/bin/python",
+                "python.terminal.activateEnvironment": true,
+                "python.analysis.autoImportCompletions": true,
+                "editor.renderWhitespace": "all",
+                "editor.trimAutoWhitespace": true,
+                "files.trimFinalNewlines": true,
+                "files.insertFinalNewline": true,
+                "[python]": {
+                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "editor.formatOnSave": true,
+                    "editor.codeActionsOnSave": {
+                        "source.fixAll": "explicit",
+                        "source.organizeImports": "explicit"
+                    }
+                },
+                "ruff.fixAll": true,
+                "ruff.organizeImports": true,
+                "python.analysis.extraPaths": [
+                    ".netbox/netbox"
+                ],
+                "python.autoComplete.extraPaths": [
+                    ".netbox/netbox"
+                ]
+            }
+        }
+    },
+    "remoteUser": "vscode"
+}

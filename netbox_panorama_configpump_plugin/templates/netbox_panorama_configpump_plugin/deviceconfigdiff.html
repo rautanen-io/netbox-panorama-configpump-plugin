@@ -1,0 +1,59 @@
+{% extends 'generic/object.html' %}
+{% load tabs %}
+{% load static %}
+{% load helpers %}
+
+{% block title %}{{ device }} - Panorama Config Diff{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center w-100">
+                        <h5 class="card-title mb-0 flex-grow-1">
+                            <i class="mdi mdi-file-compare"></i>
+                            Configuration Differences
+                        </h5>
+                        <div class="d-flex gap-2">
+                            {% include 'netbox_panorama_configpump_plugin/theme_dropdown.html' %}
+                            {% include 'netbox_panorama_configpump_plugin/view_toggle_button.html' %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if not rendered_configuration_valid %}
+                    <div class="mb-2">
+                        <span class="text-danger"><i class="mdi mdi-alert"></i> Rendered configuration in NetBox contains invalid XML</span>
+                    </div>
+                    {% endif %}
+                    {% if not panorama_configuration_valid %}
+                    <div class="mb-2">
+                        <span class="text-danger"><i class="mdi mdi-alert"></i> Pulled configuration from Panorama contains invalid XML</span>
+                    </div>
+                    {% endif %}
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Pulled configuration from Panorama</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Rendered configuration in NetBox</h6>
+                        </div>
+                    </div>
+                    <div id="diff-editor" style="width:100%;height:80vh;border:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration data for JavaScript -->
+    <script type="application/json" id="config-data">
+        {
+            "originalConfig": "{{ panorama_configuration | escapejs }}",
+            "modifiedConfig": "{{ rendered_configuration | escapejs }}"
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs/loader.js"></script>
+    <script src="{% static 'netbox_panorama_configpump_plugin/js/config-diff.js' %}"></script>
+
+{% endblock %}

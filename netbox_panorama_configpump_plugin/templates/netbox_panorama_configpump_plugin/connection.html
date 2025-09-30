@@ -1,0 +1,103 @@
+{% extends 'generic/object.html' %}
+{% load render_table from django_tables2 %}
+{% load helpers %}
+
+{% block content %}
+  <div class="row mb-3">
+    <div class="col col-md-6">
+      <div class="card">
+
+        <h5 class="card-header">Connection</h5>
+
+        <table class="table table-hover attr-table">
+          <tr>
+            <th scope="row">Name</th>
+            <td>{{ object.name }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Template</th>
+            <td>
+              {% if object.connection_template %}
+                <a href="{{ object.connection_template.get_absolute_url }}">{{ object.connection_template }}</a>
+              {% else %}
+                <span class="text-muted">None</span>
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Description</th>
+            <td>{{ object.description|placeholder }}</td>
+          </tr>
+        </table>
+      </div>
+      {% include 'inc/panels/custom_fields.html' %}
+    </div>
+    <div class="col col-md-6">
+      {% include 'inc/panels/tags.html' %}
+      {% include 'inc/panels/comments.html' %}
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col col-md-12">
+      <div class="card">
+        <h5 class="card-header">
+          Device Configuration Sync Status
+        </h5>
+        <div class="card-body">
+          {% if device_config_sync_status_table %}
+            {% render_table device_config_sync_status_table %}
+          {% else %}
+            <div class="text-muted">
+              <i class="mdi mdi-information"></i>
+              No device configuration sync status entries found for this connection.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}
+
+{% block javascript %}
+<script>
+// Look for job status badges in the table and
+// reload the page if there are any non-completed jobs
+document.addEventListener('DOMContentLoaded', function() {
+    function hasNonCompletedJobs() {
+        const jobStatusElements = document.querySelectorAll('.badge');
+        let hasNonCompleted = false;
+
+        jobStatusElements.forEach(function(element) {
+            const text = element.textContent.trim().toLowerCase();
+            if (text === 'pending' || text === 'scheduled' || text === 'running') {
+                hasNonCompleted = true;
+            }
+        });
+
+        return hasNonCompleted;
+    }
+
+    function reloadPage() {
+        window.location.reload();
+    }
+
+    if (hasNonCompletedJobs()) {
+        const reloadInterval = setInterval(function() {
+            if (hasNonCompletedJobs()) {
+                reloadPage();
+            } else {
+                clearInterval(reloadInterval);
+            }
+        }, 5000);
+
+        setTimeout(function() {
+            if (!hasNonCompletedJobs()) {
+                clearInterval(reloadInterval);
+            }
+        }, 2000);
+    }
+});
+</script>
+{% endblock javascript %}

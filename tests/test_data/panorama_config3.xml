@@ -1,0 +1,153 @@
+<?xml version='1.0' encoding='utf-8'?>
+<config version="11.1.0" urldb="paloaltonetworks" detail-version="11.1.6">
+    <devices>
+        <entry name="localhost.localdomain">
+            <template>
+                <entry name="Netbox">
+                    <config>
+                        <devices>
+                            <entry name="localhost.localdomain">
+                                <network>
+                                    <interface>
+                                        <ethernet>
+                                            <entry name="ethernet1/1">
+                                                <layer3>
+                                                    <units>
+                                                        <entry name="ethernet1/1.225">
+                                                            <sdwan-link-settings>
+                                                                <upstream-nat>
+                                                                    <enable>no</enable>
+                                                                    <static-ip />
+                                                                </upstream-nat>
+                                                                <enable>no</enable>
+                                                                <ipv6-enable>no</ipv6-enable>
+                                                            </sdwan-link-settings>
+                                                            <ndp-proxy>
+                                                                <enabled>no</enabled>
+                                                            </ndp-proxy>
+                                                            <adjust-tcp-mss>
+                                                                <enable>no</enable>
+                                                            </adjust-tcp-mss>
+                                                            <tag>222</tag>
+                                                        </entry>
+                                                        <entry name="ethernet1/1.223">
+                                                            <sdwan-link-settings>
+                                                                <upstream-nat>
+                                                                    <enable>no</enable>
+                                                                    <static-ip />
+                                                                </upstream-nat>
+                                                                <enable>no</enable>
+                                                                <ipv6-enable>no</ipv6-enable>
+                                                            </sdwan-link-settings>
+                                                            <ndp-proxy>
+                                                                <enabled>no</enabled>
+                                                            </ndp-proxy>
+                                                            <adjust-tcp-mss>
+                                                                <enable>no</enable>
+                                                            </adjust-tcp-mss>
+                                                            <tag>222</tag>
+                                                        </entry>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                        </ethernet>
+                                    </interface>
+                                </network>
+                            </entry>
+                        </devices>
+                    </config>
+                </entry>
+                <entry name="Netbox2">
+                    <config>
+                        <devices>
+                            <entry name="localhost.localdomain">
+                                <network>
+                                    <interface>
+                                        <ethernet>
+                                            <entry name="ethernet1/3">
+                                                <layer3>
+                                                    <units>
+                                                        <entry name="ethernet1/3.229">
+                                                            <sdwan-link-settings>
+                                                                <upstream-nat>
+                                                                    <enable>no</enable>
+                                                                    <static-ip />
+                                                                </upstream-nat>
+                                                                <enable>no</enable>
+                                                                <ipv6-enable>no</ipv6-enable>
+                                                            </sdwan-link-settings>
+                                                            <ndp-proxy>
+                                                                <enabled>no</enabled>
+                                                            </ndp-proxy>
+                                                            <adjust-tcp-mss>
+                                                                <enable>no</enable>
+                                                            </adjust-tcp-mss>
+                                                            <tag>222</tag>
+                                                        </entry>
+                                                        <entry name="ethernet1/3.224">
+                                                            <sdwan-link-settings>
+                                                                <upstream-nat>
+                                                                    <enable>no</enable>
+                                                                    <static-ip />
+                                                                </upstream-nat>
+                                                                <enable>no</enable>
+                                                                <ipv6-enable>no</ipv6-enable>
+                                                            </sdwan-link-settings>
+                                                            <ndp-proxy>
+                                                                <enabled>no</enabled>
+                                                            </ndp-proxy>
+                                                            <adjust-tcp-mss>
+                                                                <enable>no</enable>
+                                                            </adjust-tcp-mss>
+                                                            <tag>222</tag>
+                                                        </entry>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                        </ethernet>
+                                    </interface>
+                                </network>
+                            </entry>
+                        </devices>
+                    </config>
+                </entry>
+            </template>
+            <device-group>
+                <entry name="Netbox">
+                    <devices />
+                    <address>
+                        <entry name="testi1233">
+                            <ip-netmask>1.1.1.1</ip-netmask>
+                        </entry>
+                    </address>
+                </entry>
+                <entry name="Netbox2">
+                    <devices />
+                </entry>
+            </device-group>
+        </entry>
+    </devices>
+    <readonly>
+        <max-internal-id>14</max-internal-id>
+        <devices>
+            <entry name="localhost.localdomain">
+                <template>
+                    <entry name="Netbox">
+                        <id>11</id>
+                    </entry>
+                    <entry name="Netbox2">
+                        <id>12</id>
+                    </entry>
+                </template>
+                <device-group>
+                    <entry name="Netbox">
+                        <id>13</id>
+                    </entry>
+                    <entry name="Netbox2">
+                        <id>14</id>
+                    </entry>
+                </device-group>
+            </entry>
+        </devices>
+    </readonly>
+</config>

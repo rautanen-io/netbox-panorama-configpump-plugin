@@ -1,0 +1,102 @@
+{% extends 'generic/_base.html' %}
+{% load form_helpers %}
+
+{% block title %}Confirm Configuration Push{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8 col-lg-6 mx-auto">
+    <div class="card bg-light">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="mdi mdi-upload text-success me-2"></i>
+          Confirm Configuration Push
+        </h5>
+      </div>
+
+      <div class="card-body">
+        <div class="alert alert-warning">
+          <i class="mdi mdi-upload-network me-2"></i>
+          <strong>Stage Configuration in Panorama</strong>
+          <p class="mb-0 mt-2">
+            The configuration will be uploaded and staged in Panorama.
+            <strong>You must manually commit the changes in Panorama</strong> before they take effect.
+          </p>
+        </div>
+
+        <div class="mb-3">
+          {% if is_connection_push %}
+            <p class="mb-2">
+              You are about to stage configurations for all devices in connection:
+            </p>
+            <div class="bg-light-subtle p-3 rounded">
+              <div class="row">
+                <div class="col-sm-3"><strong>Connection:</strong></div>
+                <div class="col-sm-9">
+                  <a href="{{ object.get_absolute_url }}">{{ object }}</a>
+                </div>
+              </div>
+              <div class="row mt-2">
+                <div class="col-sm-3"><strong>Devices:</strong></div>
+                <div class="col-sm-9">
+                  {% if devices %}
+                    <ul class="mb-0">
+                      {% for device in devices %}
+                        <li><a href="{{ device.get_absolute_url }}">{{ device }}</a></li>
+                      {% endfor %}
+                    </ul>
+                  {% else %}
+                    <span class="text-muted">No devices found</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <p class="mb-2">
+              You are about to stage the configuration for:
+            </p>
+            <div class="bg-light-subtle p-3 rounded">
+              <div class="row">
+                <div class="col-sm-3"><strong>Device:</strong></div>
+                <div class="col-sm-9">
+                  <a href="{{ device.get_absolute_url }}">{{ device }}</a>
+                </div>
+              </div>
+              <div class="row mt-2">
+                <div class="col-sm-3"><strong>Connection:</strong></div>
+                <div class="col-sm-9">
+                  <a href="{{ connection.get_absolute_url }}">{{ connection }}</a>
+                </div>
+              </div>
+              {% if object.last_push %}
+              <div class="row mt-2">
+                <div class="col-sm-3"><strong>Last Push:</strong></div>
+                <div class="col-sm-9">
+                  <span class="text-muted">{{ object.last_push|date:"M d, Y H:i" }}</span>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+
+        <form method="post" class="mt-4">
+          {% csrf_token %}
+          {% render_form form %}
+
+          <div class="d-flex justify-content-between mt-4">
+            <a href="{{ return_url }}" class="btn btn-outline-secondary">
+              <i class="mdi mdi-arrow-left me-1"></i>
+              Cancel
+            </a>
+            <button type="submit" class="btn btn-warning">
+              <i class="mdi mdi-upload-network me-1"></i>
+              {% if is_connection_push %}Stage All Configurations in Panorama{% else %}Stage in Panorama{% endif %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
