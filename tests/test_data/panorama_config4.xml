@@ -1,0 +1,213 @@
+<config version="11.1.0" urldb="paloaltonetworks" detail-version="11.1.6">
+    <mgt-config>
+        <devices />
+        <users>
+            <entry name="admin">
+                <phash>*</phash>
+                <permissions>
+                    <role-based>
+                        <superuser>yes</superuser>
+                    </role-based>
+                </permissions>
+            </entry>
+            <entry name="__cloudconnector">
+                <permissions>
+                    <role-based>
+                        <panorama-admin>yes</panorama-admin>
+                    </role-based>
+                </permissions>
+            </entry>
+            <entry name="__openconfig">
+                <permissions>
+                    <role-based>
+                        <panorama-admin>yes</panorama-admin>
+                    </role-based>
+                </permissions>
+            </entry>
+            <entry name="__vm_series">
+                <permissions>
+                    <role-based>
+                        <panorama-admin>yes</panorama-admin>
+                    </role-based>
+                </permissions>
+            </entry>
+            <entry name="abc">
+                <permissions>
+                    <role-based>
+                        <superuser>yes</superuser>
+                    </role-based>
+                </permissions>
+            </entry>
+        </users>
+        <password-complexity>
+            <enabled>yes</enabled>
+            <minimum-length>8</minimum-length>
+        </password-complexity>
+    </mgt-config>
+    <shared />
+    <devices>
+        <entry name="localhost.localdomain">
+            <deviceconfig>
+                <system>
+                    <update-server>updates.paloaltonetworks.com</update-server>
+                    <update-schedule>
+                        <threats>
+                            <recurring>
+                                <weekly>
+                                    <day-of-week>wednesday</day-of-week>
+                                    <at>01:02</at>
+                                    <action>download-only</action>
+                                </weekly>
+                            </recurring>
+                        </threats>
+                    </update-schedule>
+                    <timezone>US/Pacific</timezone>
+                    <service>
+                        <disable-telnet>yes</disable-telnet>
+                        <disable-http>yes</disable-http>
+                    </service>
+                    <device-telemetry>
+                        <device-health-performance>yes</device-health-performance>
+                        <product-usage>yes</product-usage>
+                        <threat-prevention>yes</threat-prevention>
+                        <region>Americas</region>
+                    </device-telemetry>
+                    <type>
+                        <dhcp-client>
+                            <send-hostname>yes</send-hostname>
+                            <send-client-id>no</send-client-id>
+                            <accept-dhcp-hostname>no</accept-dhcp-hostname>
+                            <accept-dhcp-domain>no</accept-dhcp-domain>
+                        </dhcp-client>
+                    </type>
+                    <hostname>Panorama</hostname>
+                </system>
+                <setting>
+                    <management>
+                        <storage-partition>
+                            <internal />
+                        </storage-partition>
+                        <hostname-type-in-syslog>FQDN</hostname-type-in-syslog>
+                        <initcfg>
+                            <type>
+                                <dhcp-client>
+                                    <send-hostname>yes</send-hostname>
+                                    <send-client-id>no</send-client-id>
+                                    <accept-dhcp-hostname>no</accept-dhcp-hostname>
+                                    <accept-dhcp-domain>no</accept-dhcp-domain>
+                                </dhcp-client>
+                            </type>
+                        </initcfg>
+                    </management>
+                </setting>
+            </deviceconfig>
+            <template>
+                <entry name="MyTemplate1">
+                    <config>
+                        <devices>
+                            <entry name="localhost.localdomain">
+                                <network>
+                                    <interface>
+                                        <ethernet>
+                                            <entry name="ethernet1/1" />
+                                            <entry name="ethernet1/2">
+                                                <tap />
+                                            </entry>
+                                            <entry name="ethernet1/3" />
+                                            <entry name="ethernet1/4" />
+                                            <entry name="ethernet1/5" />
+                                            <entry name="ethernet1/6" />
+                                            <entry name="ethernet1/7" />
+                                            <entry name="ethernet1/8" />
+                                            <entry name="ethernet1/9" />
+                                            <entry name="ethernet1/10" />
+                                            <entry name="ethernet1/11" />
+                                            <entry name="ethernet1/12" />
+                                            <entry name="ethernet1/13" />
+                                            <entry name="ethernet1/14" />
+                                            <entry name="ethernet1/15" />
+                                            <entry name="ethernet1/16" />
+                                            <entry name="ethernet1/17" />
+                                            <entry name="ethernet1/18" />
+                                            <entry name="ethernet1/19" />
+                                            <entry name="ethernet1/20" />
+                                            <entry name="ethernet1/21" />
+                                            <entry name="ethernet1/22" />
+                                            <entry name="ethernet1/23" />
+                                            <entry name="ethernet1/24" />
+                                        </ethernet>
+                                    </interface>
+                                </network>
+                            </entry>
+                        </devices>
+                    </config>
+                </entry>
+                <entry name="MyTemplate2">
+                    <config>
+                        <devices>
+                            <entry name="localhost.localdomain">
+                                <network>
+                                    <interface>
+                                        <ethernet>
+                                            <entry name="ethernet1/1">
+                                                <layer3>
+                                                    <units>
+                                                        <entry name="ethernet1/1.1">
+                                                            <sdwan-link-settings>
+                                                                <upstream-nat>
+                                                                    <enable>no</enable>
+                                                                    <static-ip />
+                                                                </upstream-nat>
+                                                                <enable>no</enable>
+                                                                <ipv6-enable>no</ipv6-enable>
+                                                            </sdwan-link-settings>
+                                                            <ndp-proxy>
+                                                                <enabled>no</enabled>
+                                                            </ndp-proxy>
+                                                            <adjust-tcp-mss>
+                                                                <enable>no</enable>
+                                                            </adjust-tcp-mss>
+                                                            <tag>222</tag>
+                                                        </entry>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                        </ethernet>
+                                    </interface>
+                                </network>
+                            </entry>
+                        </devices>
+                    </config>
+                </entry>
+            </template>
+            <device-group>
+                <entry name="MyTemplate1">
+                <devices/>
+                <address>
+                    <entry name="test123">
+                    <ip-netmask>1.1.1.1</ip-netmask>
+                    </entry>
+                </address>
+                </entry>
+                <entry name="MyTemplate2">
+                <devices/>
+                </entry>
+            </device-group>
+        </entry>
+    </devices>
+    <readonly>
+        <max-internal-id>12</max-internal-id>
+        <devices>
+            <entry name="localhost.localdomain">
+                <template>
+                    <entry name="MyTemplate1">
+                        <id>11</id>
+                    </entry>
+                    <entry name="MyTemplate2">
+                        <id>12</id>
+                    </entry>
+                </template>
+            </entry>
+        </devices>
+    </readonly>
+</config>
