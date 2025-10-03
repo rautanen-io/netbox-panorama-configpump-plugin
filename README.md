@@ -1,6 +1,8 @@
 # NetBox Panorama ConfigPump Plugin
 
-A NetBox plugin that synchronizes Palo Alto Networks Panorama configuration from NetBox data using a pull → diff → push workflow.
+A NetBox plugin that synchronizes configurations from NetBox to Palo Alto Networks Panorama with a pull → diff → push workflow.
+
+![Alt-teksti](images/Panorama-ConfigPump-concept.svg)
 
 ## Overview
 
