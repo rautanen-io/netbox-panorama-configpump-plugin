@@ -12,6 +12,10 @@ from netbox.jobs import JobRunner
 from netbox_panorama_configpump_plugin.device_config_sync_status.models import (
     DeviceConfigSyncStatus,
 )
+from netbox_panorama_configpump_plugin.utils.helpers import (
+    sanitize_error_message,
+    sanitize_nested_values,
+)
 
 # pylint: disable=line-too-long
 
@@ -71,9 +75,9 @@ def _set_response_stats(
         response_stats["config_push_http_status"] = push_response_stats[
             "config_push_http_status"
         ]
-        response_stats["config_load_responses"] = push_response_stats[
-            "config_load_responses"
-        ]
+        response_stats["config_load_responses"] = sanitize_nested_values(
+            push_response_stats["config_load_responses"]
+        )
     job.data = response_stats
 
 
@@ -117,9 +121,10 @@ class PushAndPullDeviceConfigJobRunner(JobRunner):
             )
 
         except ValueError as value_error:
-            self.job.error = str(value_error)
+            sanitized_error_message = sanitize_error_message(str(value_error))
+            self.job.error = sanitized_error_message
             raise ValueError(
-                f"Configuration push and pull failed: {value_error}"
+                f"Configuration push and pull failed: {sanitized_error_message}"
             ) from value_error
 
         _set_response_stats(
@@ -159,16 +164,17 @@ class PullDeviceConfigJobRunner(JobRunner):
             _set_response_stats(self.job, device_config_sync_status)
 
         except ValueError as value_error:
-            self.job.error = str(value_error)
+            sanitized_error_message = sanitize_error_message(str(value_error))
+            self.job.error = sanitized_error_message
 
             error_stats = {
                 "response_length": 0,
                 "has_response": False,
                 "timestamp": timezone.now().isoformat(),
                 "status": "error",
-                "error_message": str(value_error),
+                "error_message": sanitized_error_message,
             }
             self.job.data = error_stats
             raise ValueError(
-                f"Configuration pull failed: {value_error}"
+                f"Configuration pull failed: {sanitized_error_message}"
             ) from value_error
