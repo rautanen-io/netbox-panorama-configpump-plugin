@@ -45,6 +45,7 @@ Tested combinations:
 
 | Plugin Version | NetBox Versions   | Panorama versions |
 |:--------------:|:-----------------:|:-----------------:|
+|      1.0.1     |   4.2.5 - 4.3.7   |  10.2.10, 11.1.6  |
 |      1.0.0     |   4.2.5 - 4.3.7   |  10.2.10, 11.1.6  |
 
 ## Installation
