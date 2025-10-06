@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import difflib
+import re
+from typing import Any
 
+from django.conf import settings
 from django.urls import reverse
 from lxml import etree
 
@@ -96,3 +99,39 @@ def calculate_diff(
                 removed += removed_lines - added_lines
 
     return {"added": added, "removed": removed, "changed": changed}
+
+
+def sanitize_error_message(msg: str) -> str:
+    """
+    Sanitize sensitive information from error messages.
+    """
+    sanitized = msg
+
+    plugin_config = getattr(settings, "PLUGINS_CONFIG", {}).get(
+        "netbox_panorama_configpump_plugin", {}
+    )
+    tokens = plugin_config.get("tokens", {}) or {}
+
+    for token_value in tokens.values():
+        if token_value and isinstance(token_value, str) and token_value in sanitized:
+            sanitized = sanitized.replace(token_value, "***")
+
+    sanitized = re.sub(r"0x[0-9a-fA-F]+", "0x***", sanitized)
+    sanitized = re.sub(r"key=[^&\s]+", "key=***", sanitized)
+
+    return sanitized
+
+
+def sanitize_nested_values(value: Any) -> Any:
+    """
+    Recursively sanitize nested structures using sanitize_error_message for strings.
+    """
+    if isinstance(value, dict):
+        return {k: sanitize_nested_values(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [sanitize_nested_values(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(sanitize_nested_values(item) for item in value)
+    if isinstance(value, str):
+        return sanitize_error_message(value)
+    return value
