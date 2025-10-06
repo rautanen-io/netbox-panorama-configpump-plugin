@@ -17,6 +17,10 @@ This plugin enables you to declare Panorama configuration in NetBox, render it f
   <img src="images/second_push.png" alt="NetBox Panorama ConfigPump UI screenshot" style="max-width: 100%; height: auto;" />
 </div>
 
+## Introduction video
+[![Watch the video](https://img.youtube.com/vi/9GfsvGQwZU0/maxresdefault.jpg)](https://youtu.be/9GfsvGQwZU0)
+
+
 ## Concepts
 
 - **Config Template**: Jinja + XML template that renders device-specific Panorama XML using NetBox data. See: [examples/v11.1.6/template_example.xml.j2](examples/v11.1.6/template_example.xml.j2)
