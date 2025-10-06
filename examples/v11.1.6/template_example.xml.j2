@@ -2,6 +2,15 @@
     <devices>
         <entry name="localhost.localdomain">
             <template>
+                {#- 
+                    You can define zero or multiple Panorama templates here.
+
+                    NOTE!
+                    Panorama ConfigPump will completely OVERWRITE the Template in Panorama
+                    if it has same name you specified here. Keep your manual configurations
+                    in another Template in Panorama and utilize Template Stacks.
+                
+                #}
                 <entry name="MyTemplate1">
                     <config>
                         <devices>
@@ -9,6 +18,9 @@
                                 <network>
                                     <interface>
                                         <ethernet>
+                                            {#-  
+                                                Here we configure Ethernet interfaces and their subinterfaces.
+                                            #}
                                             {%-   for interface in device.interfaces.exclude(type="virtual").filter(name__startswith="ethernet") %}
                                             <entry name="{{ interface.name }}">
                                                 <layer3>
@@ -21,7 +33,6 @@
                                                                     <static-ip />
                                                                 </upstream-nat>
                                                                 <enable>no</enable>
-                                                                <ipv6-enable>no</ipv6-enable>
                                                             </sdwan-link-settings>
                                                             <ndp-proxy>
                                                                 <enabled>no</enabled>
@@ -47,13 +58,65 @@
                 </entry>
             </template>
             <device-group>
+                {#- 
+                    You can define zero or multiple Panorama Device Groups here.
+
+                    NOTE!
+                    Panorama ConfigPump will completely OVERWRITE the Device Group in Panorama
+                    if it has same name you specified here. Keep your manual configurations
+                    in another Device Groups in Panorama and utilize Device Group Hierarchy.
+                
+                #}
                 <entry name="MyDeviceGroup1">
                     <devices />
+                    {#-  
+                        In the following block IP-addresses are looped through and
+                        address objects are created. Roles of IP-address assigned
+                        devices is saved using namespaces for later use.                    
+                    #}
                     <address>
-                        <entry name="test1">
-                            <ip-netmask>1.1.1.1</ip-netmask>
+                    {%- set ns = namespace(device_roles={}) %}
+                    {%- for ipaddr in ipam.IPAddress.objects.all() %}
+                        <entry name="h-{{ ipaddr.address.ip }}">
+                            <ip-netmask>{{ ipaddr.address.ip }}</ip-netmask>
                         </entry>
+                        {#- 
+                            Save assigned device role for later use 
+                        #}
+                        {%- if ipaddr.assigned_object and ipaddr.assigned_object.device %}
+                            {%- set role = ipaddr.assigned_object.device.role.name %}
+                        {%- else %}
+                            {%- set role = 'unknown' %}
+                        {%- endif %}
+                        {#- 
+                            If role is not in the list yet, create empty list
+                            for it.
+                        #}
+                        {%- if role not in ns.device_roles %}
+                            {%- set _ = ns.device_roles.update({role: []}) %}
+                        {%- endif %}
+                        {#
+                            Append IP-address into roles list
+                        #}
+                        {%- set _ = ns.device_roles[role].append(ipaddr.address.ip) %}
+                    {%- endfor %}
                     </address>
+                    {#-  
+                        In the following block IP-address blocks are looped through and
+                        address groups are created. IP-address objects are attached to
+                        the groups.
+                    #}
+                    <address-group>
+                        {%- for role, ip_list in ns.device_roles.items() %}
+                        <entry name="{{ role }}">
+                            <static>
+                                {%- for ip in ip_list %}
+                                <member>h-{{ ip }}</member>
+                                {%- endfor %}
+                            </static>
+                        </entry>
+                        {%- endfor %}
+                    </address-group>
                 </entry>
             </device-group>
         </entry>
