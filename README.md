@@ -120,3 +120,7 @@ See the [Releases](https://github.com/rautanen-io/netbox-panorama-configpump-plu
 ## Sponsorship
 
 If you find this plugin useful and want to sponsor ongoing development or integrate NetBox‑driven configuration for switches and routers, please [contact us](https://www.rautanen.io). We also provide ConfigPumps for Cisco and Arista switches and routers.
+
+## Disclaimer
+
+This plugin is developed and maintained by independent contributors. It is not an official Palo Alto Networks product, nor is it affiliated with, endorsed, or supported by Palo Alto Networks in any way. Use at your own discretion.
