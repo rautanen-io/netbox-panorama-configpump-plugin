@@ -1,6 +1,6 @@
 [tool.poetry]
 name =  "netbox-panorama-configpump-plugin"
-version = "1.0.2"
+version = "1.0.3"
 description = "A NetBox plugin that synchronizes Palo Alto Networks Panorama configuration from NetBox data using a pull, diff and push workflow."
 authors = ["Veikko Pankakoski <veikko@rautanen.io>", "Jaakko Rautanen <jaakko@rautanen.io>"]
 license = "Apache-2.0"

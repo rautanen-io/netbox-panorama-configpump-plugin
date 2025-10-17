@@ -41,6 +41,7 @@ from netbox_panorama_configpump_plugin.device_config_sync_status.tables import (
     DeviceConfigSyncStatusTable,
 )
 from netbox_panorama_configpump_plugin.utils.helpers import (
+    extract_matching_xml_by_xpaths,
     get_return_url,
     normalize_xml,
 )
@@ -142,7 +143,6 @@ class DeviceConfigPushView(ObjectView):
             {
                 "form": form,
                 "object": device_config_sync_status,
-                "return_url": get_return_url(device_config_sync_status),
                 "device": device_config_sync_status.device,
                 "connection": device_config_sync_status.connection,
             },
@@ -217,6 +217,11 @@ class DeviceConfigDiffView(ContentTypePermissionRequiredMixin, ObjectView):
             rendered_configuration, rendered_configuration_valid = normalize_xml(
                 config_sync_status.get_rendered_configuration()
             )
+            if rendered_configuration_valid:
+                rendered_configuration = extract_matching_xml_by_xpaths(
+                    rendered_configuration, config_sync_status.get_xpath_entries()
+                )
+
         else:
             panorama_configuration = ""
             panorama_configuration_valid = False

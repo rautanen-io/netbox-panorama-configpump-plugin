@@ -23,6 +23,7 @@ class DeviceConfigSyncStatusActionsColumn(columns.ActionsColumn):
 
     actions = {
         "": ActionsItem("View", "eye", "view", "secondary"),
+        "edit": ActionsItem("Edit", "pencil", "edit", "primary"),
         "delete": ActionsItem("Detach device", "close-circle", "delete", "danger"),
         "changelog": ActionsItem("Changelog", "history", "changelog", "secondary"),
     }
@@ -46,7 +47,7 @@ class DeviceConfigSyncStatusTable(NetBoxTable):
         url_name="plugins:netbox_panorama_configpump_plugin:deviceconfigsyncstatus_list"
     )
     actions = DeviceConfigSyncStatusActionsColumn(
-        actions=("", "delete", "changelog"),
+        actions=("", "edit", "delete", "changelog"),
         split_actions=True,
         extra_buttons=DEVICE_CONFIG_SYNC_STATUS_ACTIONS,
     )

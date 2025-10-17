@@ -85,7 +85,7 @@
           {% render_form form %}
 
           <div class="d-flex justify-content-between mt-4">
-            <a href="{{ return_url }}" class="btn btn-outline-secondary">
+            <a href="{{ return_url }}" class="btn btn-outline-secondary" onclick="if (window.history.length > 1) { history.back(); return false; }">
               <i class="mdi mdi-arrow-left me-1"></i>
               Cancel
             </a>
