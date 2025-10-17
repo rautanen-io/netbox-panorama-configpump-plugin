@@ -287,3 +287,41 @@ window.addEventListener('beforeunload', () => {
         window.configDiffEditorInstance.dispose();
     }
 });
+
+// Handle browser back/forward cache (bfcache) restores
+// When returning to the page via back/forward, scripts are not re-run.
+// Use pageshow to reinitialize or relayout the editor so the diff is visible.
+function relayoutOrReinitializeDiffEditor() {
+    const instance = window.configDiffEditorInstance;
+    const container = document.getElementById('diff-editor');
+
+    if (!container) {
+        return;
+    }
+
+    if (instance && instance.diffEditor) {
+        try {
+            instance.diffEditor.layout();
+        } catch (e) {
+            // If layout fails (e.g., disposed), try to re-init
+            container.removeAttribute('data-monaco-initialized');
+            initializeConfigDiffEditor();
+        }
+    } else {
+        // If we have a stale initialized marker but no instance, clear and re-init
+        container.removeAttribute('data-monaco-initialized');
+        initializeConfigDiffEditor();
+    }
+}
+
+window.addEventListener('pageshow', (event) => {
+    // Always attempt to relayout/reinit on pageshow, including bfcache restores
+    relayoutOrReinitializeDiffEditor();
+});
+
+// Dispose on pagehide to avoid stale state across BFCache navigations
+window.addEventListener('pagehide', () => {
+    if (window.configDiffEditorInstance) {
+        window.configDiffEditorInstance.dispose();
+    }
+});

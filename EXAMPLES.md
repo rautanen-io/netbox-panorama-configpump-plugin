@@ -4,10 +4,12 @@ This guide walks through a complete example of using the NetBox Panorama ConfigP
 
 If you have not enabled and configured the plugin yet, start with the [README](README.md) and [CONFIGURATION](CONFIGURATION.md) guides.
 
-### Prerequisites
+## Prerequisites
 - Ensure the plugin is enabled and configured. See [CONFIGURATION.md](CONFIGURATION.md).
 - Panorama API token(s) available via `PLUGINS_CONFIG["netbox_panorama_configpump_plugin"]["tokens"]`.
 - Create NetBox `Device` objects for the firewalls you want to keep in sync.
+
+## Basic Example
 
 1. Create the devices in NetBox.
 <div align="center">
@@ -104,4 +106,58 @@ For each device included in the connection, the plugin performs the following st
 18. Under Objects → Addresses, you should see the uploaded Device Groups and configuration matching the Config Template data (dynamic data from NetBox can be mapped here as needed).
 <div align="center">
 <img src="images/panorama_device_group.png" alt="Device Groups applied in Panorama" style="max-width: 100%; height: auto;" />
+</div>
+
+## Advanced Example
+
+This example demonstrates a more fine-grained update. We will modify only a single sub-interface. You can replace arbitrary parts of the Panorama configuration by composing a suitable XPath.
+
+1. Let's create two more sub-interfaces.
+<div align="center">
+<img src="images/create_two_new_sub_interfaces.png" alt="New Sub-Interfaces" style="max-width: 100%; height: auto;" />
+</div>
+
+2. Open the diff view. You should see two new sub-interfaces pending configuration in Panorama.
+<div align="center">
+<img src="images/diff_of_two_new_sub_interfaces.png" alt="New Sub-Interfaces Diff" style="max-width: 100%; height: auto;" />
+</div>
+
+3. Instead of pushing now, modify the XPaths to precisely define which parts of the configuration are replaced.
+<div align="center">
+<img src="images/opening_deviceconfigsync_edit.png" alt="Opening Device Config Edit View" style="max-width: 100%; height: auto;" />
+</div>
+
+4. Disable `Deduce XPaths` and add a manual XPath entry: `/config/devices/entry[@name='localhost.localdomain']/template/entry[@name='MyTemplate1']/config/devices/entry[@name='localhost.localdomain']/network/interface/ethernet/entry[@name='ethernet1/1']/layer3/units/entry[@name='ethernet1/1.2']`
+<div align="center">
+<img src="images/editing_deviceconfigsync.png" alt="Editing Device Config" style="max-width: 100%; height: auto;" />
+</div>
+
+5. Pull the configuration again to refresh the diff after updating the XPath entries.
+
+<div align="center">
+<img src="images/pull_before_partial_replacement.png" alt="Pulling Configuration After XPath Changes" style="max-width: 100%; height: auto;" />
+</div>
+
+6. The plugin calculates only a diff for the parts of the Panorama configuration that match the given XPaths.
+
+<div align="center">
+<img src="images/opening_partial_replacement_diff.png" alt="Number of Lines Added After Pull" style="max-width: 100%; height: auto;" />
+</div>
+
+7. Review the diff. It shows nothing under Panorama and only the `ethernet1/1.2` sub-interface under NetBox, which makes sense because `ethernet1/1.2` is currently missing from Panorama.
+
+<div align="center">
+<img src="images/partial_replacement_diff.png" alt="Diff Before Partial Replacement" style="max-width: 100%; height: auto;" />
+</div>
+
+8. Push the new configuration to Panorama.
+
+<div align="center">
+<img src="images/push_partial_replacement.png" alt="Pushing Partial Replacement" style="max-width: 100%; height: auto;" />
+</div>
+
+9. Verify the result. Only `ethernet1/1.2` is added. Although `ethernet1/1.3` was created in NetBox and appears in the uploaded configuration file, it is not applied because the XPath targets only `ethernet1/1.2`.
+
+<div align="center">
+<img src="images/partial_replacement_in_panorama.png" alt="Partial replacement result in Panorama" style="max-width: 100%; height: auto;" />
 </div>

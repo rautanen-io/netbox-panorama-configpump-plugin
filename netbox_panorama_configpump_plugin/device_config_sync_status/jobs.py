@@ -89,6 +89,8 @@ def _find_issues_in_config_load_responses(
     for config_load_response in config_load_responses:
         if "CDATA" in config_load_response["response"]:
             return True
+        if 'response status="error"' in config_load_response["response"]:
+            return True
     return False
 
 

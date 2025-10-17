@@ -1,4 +1,3 @@
-<?xml version="1.0"?>
 <config version="11.1.0" urldb="paloaltonetworks" detail-version="11.1.6">
   <devices>
     <entry name="localhost.localdomain">
@@ -136,7 +135,7 @@
         <entry name="Netbox2">
           <devices/>
         </entry>
-    </device-group>
+      </device-group>
     </entry>
   </devices>
 </config>
