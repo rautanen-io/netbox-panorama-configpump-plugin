@@ -72,8 +72,8 @@ make fasttest ARGS="<test_path_or_marker>"
 ```
 Examples:
 ```bash
-make fasttest ARGS='-k test_extract_templates_and_device_groups_from_config'
-```
+make fasttest ARGS='-k test_extract_matching_xml_by_xpaths'
+``` 
 
 ## Linting and Formatting
 Use the pre-configured tools:

@@ -1,9 +1,10 @@
 """Test panorama client."""
 
-# pylint: disable=missing-function-docstring, missing-class-docstring
+# pylint: disable=missing-function-docstring, missing-class-docstring, line-too-long
 
 
 import os
+import xml.etree.ElementTree as ET
 from unittest.mock import Mock, patch
 
 from dcim.models import Device, DeviceRole, DeviceType, Manufacturer, Platform, Site
@@ -19,6 +20,10 @@ from netbox_panorama_configpump_plugin.connection_template.models import (
 )
 from netbox_panorama_configpump_plugin.device_config_sync_status.models import (
     DeviceConfigSyncStatus,
+)
+from netbox_panorama_configpump_plugin.utils.helpers import (
+    extract_matching_xml_by_xpaths,
+    list_item_names_in_xml,
 )
 
 
@@ -430,28 +435,20 @@ class PanoramaClientTests(TestCase):
         with open(config1_path, "r", encoding="utf-8") as f:
             panorama_config1 = f.read()
 
-        found_items = self.device_config_sync_status1.list_item_names_in_xml(
-            panorama_config1, "template"
-        )
+        found_items = list_item_names_in_xml(panorama_config1, "template")
         self.assertEqual(found_items, ["Netbox", "Netbox2"])
 
-        found_items = self.device_config_sync_status1.list_item_names_in_xml(
-            panorama_config1, "device-group"
-        )
+        found_items = list_item_names_in_xml(panorama_config1, "device-group")
         self.assertEqual(found_items, ["Netbox", "Netbox2"])
 
         config1_path = os.path.join(test_data_dir, "panorama_config4.xml")
         with open(config1_path, "r", encoding="utf-8") as f:
             panorama_config1 = f.read()
 
-        found_items = self.device_config_sync_status1.list_item_names_in_xml(
-            panorama_config1, "template"
-        )
+        found_items = list_item_names_in_xml(panorama_config1, "template")
         self.assertEqual(found_items, ["MyTemplate1", "MyTemplate2"])
 
-        found_items = self.device_config_sync_status1.list_item_names_in_xml(
-            panorama_config1, "device-group"
-        )
+        found_items = list_item_names_in_xml(panorama_config1, "device-group")
         self.assertEqual(found_items, ["MyTemplate1", "MyTemplate2"])
 
     def test_list_item_names_in_xml_invalid_xml(self, _):
@@ -459,9 +456,7 @@ class PanoramaClientTests(TestCase):
         invalid_xml = "<invalid><unclosed>tag"
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.list_item_names_in_xml(
-                invalid_xml, "template"
-            )
+            list_item_names_in_xml(invalid_xml, "template")
 
         self.assertIn("Error parsing XML config", str(context.exception))
 
@@ -481,9 +476,7 @@ class PanoramaClientTests(TestCase):
         </config>"""
 
         # This should not raise an error since the method handles missing names gracefully
-        found_items = self.device_config_sync_status1.list_item_names_in_xml(
-            malformed_xml, "template"
-        )
+        found_items = list_item_names_in_xml(malformed_xml, "template")
         self.assertEqual(found_items, [])
 
     def test_list_item_names_in_xml_empty_xml(self, _):
@@ -491,9 +484,7 @@ class PanoramaClientTests(TestCase):
         empty_xml = ""
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.list_item_names_in_xml(
-                empty_xml, "template"
-            )
+            list_item_names_in_xml(empty_xml, "template")
 
         self.assertIn("Error parsing XML config", str(context.exception))
 
@@ -502,7 +493,7 @@ class PanoramaClientTests(TestCase):
         non_xml = "This is not XML at all"
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.list_item_names_in_xml(non_xml, "template")
+            list_item_names_in_xml(non_xml, "template")
 
         self.assertIn("Error parsing XML config", str(context.exception))
 
@@ -516,9 +507,7 @@ class PanoramaClientTests(TestCase):
         </config>"""
 
         # Should return empty list, not raise error
-        found_items = self.device_config_sync_status1.list_item_names_in_xml(
-            xml_without_devices, "template"
-        )
+        found_items = list_item_names_in_xml(xml_without_devices, "template")
         self.assertEqual(found_items, [])
 
     def test_list_item_names_in_xml_missing_item_type_section(self, _):
@@ -535,44 +524,106 @@ class PanoramaClientTests(TestCase):
         </config>"""
 
         # Should return empty list when looking for 'template' but only 'device-group' exists
-        found_items = self.device_config_sync_status1.list_item_names_in_xml(
-            xml_without_template, "template"
-        )
+        found_items = list_item_names_in_xml(xml_without_template, "template")
         self.assertEqual(found_items, [])
 
-    def test_extract_templates_and_device_groups_from_config(self, _):
-        """Test extract templates and device groups from config."""
+    # pylint: disable=line-too-long
+    def test_extract_matching_xml_by_xpaths(self, _):
+        self.maxDiff = 8192  # pylint: disable=invalid-name
+
         test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
-        config1_path = os.path.join(test_data_dir, "panorama_config3.xml")
+        config1_path = os.path.join(test_data_dir, "panorama_config1.xml")
         with open(config1_path, "r", encoding="utf-8") as f:
             panorama_config1 = f.read()
 
-        new_config = self.device_config_sync_status1.extract_templates_and_device_groups_from_config(
-            panorama_config1, ["Netbox", "Netbox2"], ["Netbox", "Netbox2"]
-        )
-
-        self.assertNotIn("<readonly>", new_config)
-        self.assertNotIn("</readonly>", new_config)
-
-        self.assertIn("<template>", new_config)
-        self.assertIn("<device-group>", new_config)
-        self.assertIn('<entry name="Netbox">', new_config)
-        self.assertIn('<entry name="Netbox2">', new_config)
-
-        config1_path = os.path.join(test_data_dir, "panorama_config4.xml")
-        with open(config1_path, "r", encoding="utf-8") as f:
-            panorama_config1 = f.read()
-
-        new_config = self.device_config_sync_status1.extract_templates_and_device_groups_from_config(
+        new_config = extract_matching_xml_by_xpaths(
             panorama_config1,
-            ["MyTemplate1", "MyTemplate2"],
-            ["MyTemplate1", "MyTemplate2"],
+            [
+                "/config/devices/entry[@name='localhost.localdomain']/template/entry[@name='Netbox']",
+                "/config/devices/entry[@name='localhost.localdomain']/template/entry[@name='Netbox2']",
+                "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='Netbox']",
+                "/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='Netbox2']",
+            ],
+        )
+        self.assertEqual(new_config, panorama_config1)
+
+        new_config = extract_matching_xml_by_xpaths(
+            panorama_config1,
+            [
+                "/config/devices/entry[@name='localhost.localdomain']/template/entry[@name='Netbox']",
+            ],
+        )
+        self.assertEqual(len(new_config), 2678)
+        self.assertIn("Netbox", new_config)
+        self.assertIn("ethernet1/1.222", new_config)
+        self.assertNotIn("Netbox2", new_config)
+        self.assertNotIn("ethernet1/3.222", new_config)
+
+    def test_extract_matching_xml_by_xpaths_full_document_slash(self, _):
+        """Selecting '/' should return the full document pretty-printed."""
+        original = "<config><a><b/></a></config>"
+        result = extract_matching_xml_by_xpaths(original, ["/"])
+
+        # Canonicalize by removing whitespace-only text/tails
+        def canon(xml: str) -> bytes:
+            def strip_ws(e: ET.Element) -> None:
+                if e.text and e.text.strip() == "":
+                    e.text = ""
+                if e.tail and e.tail.strip() == "":
+                    e.tail = ""
+                for c in list(e):
+                    strip_ws(c)
+
+            root = ET.fromstring(xml)
+            strip_ws(root)
+            return ET.tostring(root)
+
+        self.assertEqual(canon(result), canon(original))
+
+    def test_extract_matching_xml_by_xpaths_full_document_tag(self, _):
+        """Selecting '/config' should return the full document pretty-printed."""
+        original = "<config><x attr='1'/></config>"
+        result = extract_matching_xml_by_xpaths(original, ["/config"])
+
+        def canon(xml: str) -> bytes:
+            def strip_ws(e: ET.Element) -> None:
+                if e.text and e.text.strip() == "":
+                    e.text = ""
+                if e.tail and e.tail.strip() == "":
+                    e.tail = ""
+                for c in list(e):
+                    strip_ws(c)
+
+            root = ET.fromstring(xml)
+            strip_ws(root)
+            return ET.tostring(root)
+
+        self.assertEqual(canon(result), canon(original))
+
+    def test_extract_matching_xml_by_xpaths_trailing_slash_normalization(self, _):
+        """Trailing slash in XPath should be treated the same as without it."""
+        xml_doc = "<config><a><b/><c/></a></config>"
+        with_slash = extract_matching_xml_by_xpaths(xml_doc, ["/config/a/"])
+        without_slash = extract_matching_xml_by_xpaths(xml_doc, ["/config/a"])
+        # Compare parsed structures
+        self.assertEqual(
+            ET.tostring(ET.fromstring(with_slash)),
+            ET.tostring(ET.fromstring(without_slash)),
         )
 
-        self.assertNotIn("<readonly>", new_config)
-        self.assertNotIn("</readonly>", new_config)
+    def test_extract_matching_xml_by_xpaths_invalid_xpath(self, _):
+        """Invalid XPath should raise ValueError with 'Invalid XPath' in message."""
+        xml_doc = "<config><a/></config>"
+        with self.assertRaises(ValueError) as ctx:
+            extract_matching_xml_by_xpaths(xml_doc, ["///bad["])
+        self.assertIn("Invalid XPath", str(ctx.exception))
 
-        self.assertIn("<template>", new_config)
-        self.assertIn("<device-group>", new_config)
-        self.assertIn('<entry name="MyTemplate1">', new_config)
-        self.assertIn('<entry name="MyTemplate2">', new_config)
+    def test_extract_matching_xml_by_xpaths_ignore_non_element_results(self, _):
+        """Attribute/text XPath results should be ignored (no nodes copied)."""
+        xml_doc = "<config><a name='n1'>text</a></config>"
+        result = extract_matching_xml_by_xpaths(
+            xml_doc, ["/config/a/@name", "/config/a/text()"]
+        )
+        root = ET.fromstring(result)
+        self.assertEqual(root.tag, "config")
+        self.assertEqual(list(root), [])

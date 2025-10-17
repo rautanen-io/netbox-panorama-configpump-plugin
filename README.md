@@ -2,7 +2,7 @@
 
 A NetBox plugin that synchronizes configurations from NetBox to Palo Alto Networks Panorama with a pull → diff → push workflow.
 
-![Alt-teksti](images/Panorama-ConfigPump-concept.svg)
+![Concept](images/Panorama-ConfigPump-concept.svg)
 
 ## Overview
 
@@ -12,6 +12,7 @@ This plugin enables you to declare Panorama configuration in NetBox, render it f
 - **Declarative updates**: Full-template and device-group **overwrites** in a single, deterministic operation (not incremental diffs of individual fields).
 - **Inline diff UI**: Uses [Monaco Editor](https://github.com/microsoft/monaco-editor) to display XML diffs before you push.
 - **Background jobs**: All long-running sync operations are executed asynchronously.
+- **Flexible updates**: Easily overwrite Panorama Templates and Device Groups, or target arbitrary XML-API paths using XPath expressions defined per firewall device.
 
 <div align="center">
   <img src="images/second_push.png" alt="NetBox Panorama ConfigPump UI screenshot" style="max-width: 100%; height: auto;" />
@@ -39,7 +40,7 @@ This plugin enables you to declare Panorama configuration in NetBox, render it f
 Refer to [EXAMPLES.md](EXAMPLES.md) for screenshots of each step.
 
 > [!CAUTION]
-> When you push configuration from NetBox using Panorama ConfigPump, any Panorama templates and device groups defined in the rendered config for a device are **completely overwritten** in Panorama. In other words, ConfigPump takes full ownership of those specific templates and device groups. Any manual changes made directly in Panorama to them will be lost on the next push.
+> When you push configuration from NetBox using Panorama ConfigPump, any Panorama templates and device groups defined in the rendered config for a device are **completely overwritten** in Panorama. In other words, ConfigPump takes full ownership of those specific templates and device groups. Any manual changes made directly in Panorama to them will be lost on the next push. However, you can also perform targeted per-firewall XPath updates that modify only the specified XML paths to avoid full configuration overwrites.
 >
 > To avoid losing manual configurations, keep any manually managed settings in **separate** templates and device groups that are not managed by ConfigPump. You can combine both manual and NetBox-managed configurations by using Panorama’s Template Stacks and Device Group Hierarchy features.
 
@@ -49,6 +50,7 @@ Tested combinations:
 
 | Plugin Version | NetBox Versions   | Panorama versions |
 |:--------------:|:-----------------:|:-----------------:|
+|      1.0.3     |   4.2.5 - 4.3.7   |  10.2.10, 11.1.6  |
 |      1.0.2     |   4.2.5 - 4.3.7   |  10.2.10, 11.1.6  |
 |      1.0.1     |   4.2.5 - 4.3.7   |  10.2.10, 11.1.6  |
 |      1.0.0     |   4.2.5 - 4.3.7   |  10.2.10, 11.1.6  |

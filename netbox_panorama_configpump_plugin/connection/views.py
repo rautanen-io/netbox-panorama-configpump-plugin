@@ -165,7 +165,6 @@ class ConnectionPushView(ObjectView):
             {
                 "form": form,
                 "object": connection,
-                "return_url": get_return_url(connection),
                 "devices": devices,
                 "is_connection_push": True,
             },

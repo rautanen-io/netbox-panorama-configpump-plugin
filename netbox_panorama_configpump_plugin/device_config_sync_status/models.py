@@ -6,6 +6,7 @@ from typing import Any
 
 from core.models import Job
 from dcim.models import Device
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from netbox.models import JobsMixin, NetBoxModel
 
@@ -15,6 +16,7 @@ from netbox_panorama_configpump_plugin.device_config_sync_status.panorama import
 )
 from netbox_panorama_configpump_plugin.utils.helpers import (
     calculate_diff,
+    extract_matching_xml_by_xpaths,
     normalize_xml,
 )
 
@@ -35,6 +37,16 @@ class DeviceConfigSyncStatus(PanoramaMixin, JobsMixin, NetBoxModel):
         on_delete=models.CASCADE,
         related_name="device_config_sync_statuses",
         help_text="Panorama connection context for this configuration.",
+    )
+
+    deduce_xpaths = models.BooleanField(
+        default=True,
+    )
+
+    manual_xpath_entries = ArrayField(
+        base_field=models.CharField(max_length=1024),
+        blank=True,
+        default=list,
     )
 
     panorama_configuration = models.TextField(
@@ -91,6 +103,16 @@ class DeviceConfigSyncStatus(PanoramaMixin, JobsMixin, NetBoxModel):
         help_text="Last synchronization job for this configuration.",
     )
 
+    def get_xpath_entries(self) -> list[str]:
+        """Get the XPath entries, manual or deduced."""
+
+        if self.deduce_xpaths:
+            return self.get_deduced_xpath_entries()
+        elif self.manual_xpath_entries:
+            return self.manual_xpath_entries
+        else:
+            return []
+
     # pylint: disable=no-member
     def get_rendered_configuration(self) -> str:
         """Get the rendered configuration."""
@@ -109,16 +131,19 @@ class DeviceConfigSyncStatus(PanoramaMixin, JobsMixin, NetBoxModel):
     def update_diffs(self) -> None:
         """Update the diffs."""
 
-        rendered_configuration = self.get_rendered_configuration()
+        filtered_rendered_configuration = extract_matching_xml_by_xpaths(
+            self.get_rendered_configuration(), self.get_xpath_entries()
+        )
         panorama_configuration = self.panorama_configuration
 
-        diff = calculate_diff(panorama_configuration, rendered_configuration)
+        diff = calculate_diff(panorama_configuration, filtered_rendered_configuration)
         self.lines_added = diff["added"]
         self.lines_removed = diff["removed"]
         self.lines_changed = diff["changed"]
 
     def update_config_render_ok(self) -> None:
         """Update the config_render_ok field."""
+
         _, rendered_configuration_valid = normalize_xml(
             self.get_rendered_configuration()
         )
@@ -126,7 +151,7 @@ class DeviceConfigSyncStatus(PanoramaMixin, JobsMixin, NetBoxModel):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Override save to automatically update diffs and config render status."""
-        # Update diffs and config render status before saving
+
         self.update_diffs()
         self.update_config_render_ok()
         super().save(*args, **kwargs)

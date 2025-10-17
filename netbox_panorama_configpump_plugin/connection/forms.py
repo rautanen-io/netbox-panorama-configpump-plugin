@@ -81,11 +81,26 @@ class ConnectionForm(NetBoxModelForm):
         """Save the form and manage device relationships."""
         super().save(commit=commit)
 
+        # Add and delete only selected devices, not all devices
+        # in the connection template:
         if commit:
             selected_devices = self.cleaned_data.get("devices", [])
-            self.instance.clear_devices()
-            for device in selected_devices:
-                self.instance.add_device(device)
+
+            selected_device_ids = set(d.pk for d in selected_devices)
+            existing_device_ids = set(
+                self.instance.devices.values_list("pk", flat=True)
+            )
+
+            device_ids_to_add = selected_device_ids - existing_device_ids
+            device_ids_to_remove = existing_device_ids - selected_device_ids
+
+            if device_ids_to_add:
+                for device in Device.objects.filter(pk__in=device_ids_to_add):
+                    self.instance.add_device(device)
+
+            if device_ids_to_remove:
+                for device in Device.objects.filter(pk__in=device_ids_to_remove):
+                    self.instance.remove_device(device)
 
         return self.instance
 
