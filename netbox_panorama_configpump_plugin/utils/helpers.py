@@ -298,3 +298,27 @@ def list_item_names_in_xml(configuration: str, item_type: str) -> list[str]:
         raise ValueError(f"Error parsing XML config: {e}") from e
     except (AttributeError, KeyError) as e:
         raise ValueError(f"Error processing config: {e}") from e
+
+
+def extract_strings_from_nested(value: Any) -> str:
+    """
+    Recursively extract all string values from nested dictionaries and lists.
+
+    Handles structures like:
+    - {'msg': {'line': {'msg': {'line': 'Config loaded from nb-test_device_b.xml'}}}}
+    - ['msg1', 'msg2']
+    - {'msg': 'simple'}
+    """
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return " ".join([extract_strings_from_nested(item) for item in value])
+    if isinstance(value, dict):
+        # Extract all string values from the dict recursively
+        string_values = []
+        for v in value.values():
+            extracted = extract_strings_from_nested(v)
+            if extracted:
+                string_values.append(extracted)
+        return " ".join(string_values)
+    return ""

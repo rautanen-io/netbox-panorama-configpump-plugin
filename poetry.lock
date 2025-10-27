@@ -835,7 +835,19 @@ setuptools = "*"
 [package.extras]
 devenv = ["black", "coverage", "flake8", "zest.releaser[recommended]"]
 
+[[package]]
+name = "xmltodict"
+version = "0.13.0"
+description = "Makes working with XML feel like you are working with JSON"
+optional = false
+python-versions = ">=3.4"
+groups = ["main"]
+files = [
+    {file = "xmltodict-0.13.0-py2.py3-none-any.whl", hash = "sha256:aa89e8fd76320154a40d19a0df04a4695fb9dc5ba977cbb68ab3e4eb225e7852"},
+    {file = "xmltodict-0.13.0.tar.gz", hash = "sha256:341595a488e3e01a85a9d8911d8912fd922ede5fecc4dce437eb4b6c8d037e56"},
+]
+
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0"
-content-hash = "ae321aeecdd2e03ce4260be9711dc58fcbd1ba68082075ab865500ebf1bfa6f5"
+content-hash = "d730c6939bddf97d0b7e005edd21cb4629ea9366de3829157613d51658557dc8"

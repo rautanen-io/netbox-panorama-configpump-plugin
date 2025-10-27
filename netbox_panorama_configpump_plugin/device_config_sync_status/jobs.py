@@ -5,33 +5,46 @@ from __future__ import annotations
 import datetime
 from typing import Any
 
-from core.models import Job
 from django.utils import timezone
 from netbox.jobs import JobRunner
 
 from netbox_panorama_configpump_plugin.device_config_sync_status.models import (
     DeviceConfigSyncStatus,
 )
-from netbox_panorama_configpump_plugin.utils.helpers import (
-    sanitize_error_message,
-    sanitize_nested_values,
+from netbox_panorama_configpump_plugin.device_config_sync_status.panorama import (
+    PanoramaLogger,
+    Status,
 )
 
 # pylint: disable=line-too-long
 
 
-def _get_device_config_sync_status(**kwargs: Any) -> DeviceConfigSyncStatus | None:
+def _get_device_config_sync_status(
+    panorama_logger: PanoramaLogger, **kwargs: Any
+) -> DeviceConfigSyncStatus | None:
     """Get device config sync status."""
 
     device_config_sync_status_id = kwargs.get("device_config_sync_status_id")
     if not device_config_sync_status_id:
-        raise ValueError("device_config_sync_status_id is required")
+        panorama_logger.log(
+            Status.FAILURE,
+            None,
+            "device_config_sync_status_id",
+            "device_config_sync_status_id is required",
+        )
+        return
 
     device_config_sync_status = DeviceConfigSyncStatus.objects.filter(
         id=device_config_sync_status_id
     ).first()
     if not device_config_sync_status:
-        raise ValueError("device_config_sync_status_id is required")
+        panorama_logger.log(
+            Status.FAILURE,
+            None,
+            "device_config_sync_status_id",
+            "device_config_sync_status_id is required",
+        )
+        return
 
     return device_config_sync_status
 
@@ -56,44 +69,6 @@ def _update_device_config_sync_status(
         )
 
 
-def _set_response_stats(
-    job: Job,
-    device_config_sync_status: DeviceConfigSyncStatus,
-    push_response_stats: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Get response stats."""
-
-    response_stats = {
-        "config_pull_length": (
-            len(device_config_sync_status.panorama_configuration)
-            if device_config_sync_status.panorama_configuration
-            else 0
-        ),
-        "timestamp": timezone.now().isoformat(),
-    }
-    if push_response_stats:
-        response_stats["config_push_http_status"] = push_response_stats[
-            "config_push_http_status"
-        ]
-        response_stats["config_load_responses"] = sanitize_nested_values(
-            push_response_stats["config_load_responses"]
-        )
-    job.data = response_stats
-
-
-def _find_issues_in_config_load_responses(
-    config_load_responses: list[dict[str, Any]],
-) -> bool:
-    """Find issues in config load responses."""
-
-    for config_load_response in config_load_responses:
-        if "CDATA" in config_load_response["response"]:
-            return True
-        if 'response status="error"' in config_load_response["response"]:
-            return True
-    return False
-
-
 class PushAndPullDeviceConfigJobRunner(JobRunner):
     """Job runner for pushing and pulling configuration to Panorama."""
 
@@ -105,43 +80,28 @@ class PushAndPullDeviceConfigJobRunner(JobRunner):
 
     def run(self, *args: Any, **kwargs: Any) -> None:
 
-        try:
-            device_config_sync_status = _get_device_config_sync_status(**kwargs)
+        panorama_logger = PanoramaLogger()
 
-            push_response = device_config_sync_status.push()
-            if push_response["config_push_http_status"] != 200:
-                raise ValueError("Push configuration returned non-200 status code")
-            push_time = timezone.now()
+        device_config_sync_status = _get_device_config_sync_status(
+            panorama_logger, **kwargs
+        )
+        if not device_config_sync_status:
+            self.job.data = panorama_logger.to_sanitized_dict()
+            raise ValueError("Device config sync status not found")
 
-            device_config_sync_status.pull()
-            pull_time = timezone.now()
+        push_ok = device_config_sync_status.push(panorama_logger)
+        self.job.data = panorama_logger.to_sanitized_dict()
 
-            _update_device_config_sync_status(
-                device_config_sync_status,
-                push_time=push_time,
-                pull_time=pull_time,
+        if not push_ok:
+            raise ValueError(
+                "Tried to push configuration to Panorama but there were issues. Check the job data for more details."
             )
 
-        except ValueError as value_error:
-            sanitized_error_message = sanitize_error_message(str(value_error))
-            self.job.error = sanitized_error_message
-            raise ValueError(
-                f"Configuration push and pull failed: {sanitized_error_message}"
-            ) from value_error
-
-        _set_response_stats(
-            self.job,
+        _update_device_config_sync_status(
             device_config_sync_status,
-            push_response_stats=push_response,
+            push_time=timezone.now(),
+            pull_time=timezone.now(),
         )
-
-        has_issues = _find_issues_in_config_load_responses(
-            push_response["config_load_responses"],
-        )
-        if has_issues:
-            raise ValueError(
-                "Configuration was loaded but there were issues. Check the job data for more details."
-            )
 
 
 class PullDeviceConfigJobRunner(JobRunner):
@@ -154,29 +114,24 @@ class PullDeviceConfigJobRunner(JobRunner):
         name = "Pull Configuration from Panorama"
 
     def run(self, *args: Any, **kwargs: Any) -> None:
-        try:
-            device_config_sync_status = _get_device_config_sync_status(**kwargs)
 
-            device_config_sync_status.pull()
+        panorama_logger = PanoramaLogger()
 
-            _update_device_config_sync_status(
-                device_config_sync_status, pull_time=timezone.now()
+        device_config_sync_status = _get_device_config_sync_status(
+            panorama_logger, **kwargs
+        )
+        if not device_config_sync_status:
+            self.job.data = panorama_logger.to_sanitized_dict()
+            raise ValueError("Device config sync status not found")
+
+        pull_ok = device_config_sync_status.pull(panorama_logger)
+        self.job.data = panorama_logger.to_sanitized_dict()
+
+        if not pull_ok:
+            raise ValueError(
+                "Tried to pull configuration from Panorama but there were issues. Check the job data for more details."
             )
 
-            _set_response_stats(self.job, device_config_sync_status)
-
-        except ValueError as value_error:
-            sanitized_error_message = sanitize_error_message(str(value_error))
-            self.job.error = sanitized_error_message
-
-            error_stats = {
-                "response_length": 0,
-                "has_response": False,
-                "timestamp": timezone.now().isoformat(),
-                "status": "error",
-                "error_message": sanitized_error_message,
-            }
-            self.job.data = error_stats
-            raise ValueError(
-                f"Configuration pull failed: {sanitized_error_message}"
-            ) from value_error
+        _update_device_config_sync_status(
+            device_config_sync_status, pull_time=timezone.now()
+        )

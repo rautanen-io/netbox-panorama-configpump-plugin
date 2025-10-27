@@ -32,6 +32,8 @@ class PanoramaConfigPumpConfig(PluginConfig):
         "default_filename_prefix": "netbox-panorama",
         "ignore_ssl_warnings": False,
         "tokens": {},
+        "commit_poll_attempts": 30,
+        "commit_poll_interval": 3,  # seconds
         "top_level_menu": False,
     }
 
