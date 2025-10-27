@@ -24,6 +24,8 @@ PLUGINS_CONFIG = {
             "PANO1_TOKEN": os.environ.get("PANO1_TOKEN"),
             "PANO2_TOKEN": os.environ.get("PANO2_TOKEN"),
         },
+        "commit_poll_attempts": 30,
+        "commit_poll_interval": 3,  # seconds
         "top_level_menu": True,  # How plugin menu is displayed
     }
 }

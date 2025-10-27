@@ -51,18 +51,19 @@ If you have not enabled and configured the plugin yet, start with the [README](R
 <img src="images/first_diff.png" alt="Diff view showing empty template and device-group" style="max-width: 100%; height: auto;" />
 </div>
 
-9. Push the configuration to Panorama. This stages changes in Panorama’s candidate configuration.
+9. Push the configuration to Panorama. The plugin uploads the rendered XML and will commit the changes in Panorama.
 <div align="center">
 <img src="images/first_push.png" alt="Initiating a push to Panorama" style="max-width: 100%; height: auto;" />
 </div>
 
-10. Confirm the push operation. After you confirm, the candidate configuration in Panorama is updated—changes are staged but not yet committed or active. Commit in Panorama to apply.
+10. Confirm the push operation. After you confirm, the plugin acquires locks, loads the changes, performs a commit, polls the job, and exports the updated configuration back to NetBox. The changes are now active in Panorama.
 
 For each device included in the connection, the plugin performs the following steps:
    1. Uploads an XML file to Panorama named `<prefix>_<device_name>.xml` (for example, `netbox-panorama_firewall1.xml`).
    2. For every `template` element in the XML, it partially updates the configuration at the XPath: `devices/entry[@name='localhost.localdomain']/template/entry[@name='<template name>']`.
    3. For every `device-group` element in the XML, it partially updates the configuration at the XPath: `devices/entry[@name='localhost.localdomain']/device-group/entry[@name='<device-group name>']`.
-   4. Retrieves (pulls) the updated candidate configuration from Panorama to ensure the changes were applied as expected.
+   4. Performs a full commit in Panorama and waits for the job to complete successfully.
+   5. Exports the resulting configuration back to NetBox to refresh the diff and confirm state.
 
 <div align="center">
 <img src="images/confirm_push.png" alt="Confirming the push to Panorama" style="max-width: 100%; height: auto;" />
@@ -83,7 +84,7 @@ For each device included in the connection, the plugin performs the following st
 <img src="images/delete_sub_interface_diff.png" alt="Diff showing the new sub-interface" style="max-width: 100%; height: auto;" />
 </div>
 
-14. Push the update to Panorama again.
+14. Push the update to Panorama again (the plugin commits automatically).
 <div align="center">
 <img src="images/second_push.png" alt="Pushing incremental updates to Panorama" style="max-width: 100%; height: auto;" />
 </div>

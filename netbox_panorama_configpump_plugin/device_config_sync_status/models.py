@@ -107,7 +107,7 @@ class DeviceConfigSyncStatus(PanoramaMixin, JobsMixin, NetBoxModel):
         """Get the XPath entries, manual or deduced."""
 
         if self.deduce_xpaths:
-            return self.get_deduced_xpath_entries()
+            return self._get_deduced_xpath_entries()
         elif self.manual_xpath_entries:
             return self.manual_xpath_entries
         else:
