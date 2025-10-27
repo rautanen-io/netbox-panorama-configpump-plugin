@@ -13,6 +13,7 @@ This plugin enables you to declare Panorama configuration in NetBox, render it f
 - **Inline diff UI**: Uses [Monaco Editor](https://github.com/microsoft/monaco-editor) to display XML diffs before you push.
 - **Background jobs**: All long-running sync operations are executed asynchronously.
 - **Flexible updates**: Easily overwrite Panorama Templates and Device Groups, or target arbitrary XML-API paths using XPath expressions defined per firewall device.
+- **Automatic commit**: Push now acquires config and commit locks, uploads the rendered XML, loads defined XPath targets, commits, polls the job, and exports the resulting config.
 
 <div align="center">
   <img src="images/second_push.png" alt="NetBox Panorama ConfigPump UI screenshot" style="max-width: 100%; height: auto;" />
@@ -35,7 +36,7 @@ This plugin enables you to declare Panorama configuration in NetBox, render it f
 3. Create a **Connection Template** for your Panorama instance (host + token key).
 4. Create a **Connection**, assign devices, then open it to view the generated XML and diff.
 5. Pull candidate config from Panorama to refresh the diff.
-6. Push to stage changes in Panorama (then commit in Panorama to apply).
+6. Push to upload and commit changes in Panorama. The plugin handles locks, loads configured XPaths, commits, and polls until completion.
 
 Refer to [EXAMPLES.md](EXAMPLES.md) for screenshots of each step.
 
@@ -44,12 +45,22 @@ Refer to [EXAMPLES.md](EXAMPLES.md) for screenshots of each step.
 >
 > To avoid losing manual configurations, keep any manually managed settings in **separate** templates and device groups that are not managed by ConfigPump. You can combine both manual and NetBox-managed configurations by using Panorama’s Template Stacks and Device Group Hierarchy features.
 
+### Commit behavior
+
+- **Locks**: On push, the plugin first verifies there are no pending changes or existing locks, then takes both a config lock and a commit lock with a descriptive comment containing the NetBox change ID.
+- **Upload**: The rendered configuration (validated and normalized XML) is uploaded to Panorama as a file.
+- **XPath load**: The plugin loads the uploaded file into Panorama using partial replace mode for each configured XPath. XPaths are, by default, deduced from the rendered XML for `template` and `device-group` entries, or you can provide manual XPath entries per device.
+- **Commit**: Performs a full commit with the same change description, captures a commit job ID, and polls until the job reports success.
+- **Export**: After a successful commit, the latest Panorama configuration matching the configured XPaths is exported back and stored to keep the diff up to date.
+- **Failure handling**: If any step fails, the plugin reverts the candidate configuration when applicable, removes locks, and exports the latest Panorama config to resync state.
+
 ## Compatibility
 
 Tested combinations:
 
 | Plugin Version | NetBox Versions   | Panorama versions |
 |:--------------:|:-----------------:|:-----------------:|
+|      1.0.4     |   4.2.5 - 4.3.7   |  10.2.10, 11.1.6  |
 |      1.0.3     |   4.2.5 - 4.3.7   |  10.2.10, 11.1.6  |
 |      1.0.2     |   4.2.5 - 4.3.7   |  10.2.10, 11.1.6  |
 |      1.0.1     |   4.2.5 - 4.3.7   |  10.2.10, 11.1.6  |

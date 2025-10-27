@@ -1,0 +1,240 @@
+<config version="11.1.0" urldb="paloaltonetworks" detail-version="11.1.6">
+    <devices>
+        <entry name="localhost.localdomain">
+            <template>
+                <entry name="MyTemplate1">
+                    <config>
+                        <devices>
+                            <entry name="localhost.localdomain">
+                                <network>
+                                    <interface>
+                                        <ethernet>
+                                            <entry name="ethernet1/1">
+                                                <layer3>
+                                                    <units>
+                                                        <entry name="ethernet1/1.1">
+                                                            <sdwan-link-settings>
+                                                                <upstream-nat>
+                                                                    <enable>no</enable>
+                                                                    <static-ip />
+                                                                </upstream-nat>
+                                                                <enable>no</enable>
+                                                            </sdwan-link-settings>
+                                                            <ndp-proxy>
+                                                                <enabled>no</enabled>
+                                                            </ndp-proxy>
+                                                            <adjust-tcp-mss>
+                                                                <enable>no</enable>
+                                                            </adjust-tcp-mss>
+                                                            <tag>1</tag>
+                                                        </entry>
+                                                        <entry name="ethernet1/1.3">
+                                                            <sdwan-link-settings>
+                                                                <upstream-nat>
+                                                                    <enable>no</enable>
+                                                                    <static-ip />
+                                                                </upstream-nat>
+                                                                <enable>no</enable>
+                                                            </sdwan-link-settings>
+                                                            <ndp-proxy>
+                                                                <enabled>no</enabled>
+                                                            </ndp-proxy>
+                                                            <adjust-tcp-mss>
+                                                                <enable>no</enable>
+                                                            </adjust-tcp-mss>
+                                                            <tag>2</tag>
+                                                        </entry>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/2">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/3">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/4">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/5">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/6">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/7">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/8">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/9">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/10">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/11">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/12">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/13">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/14">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/15">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/16">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/17">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/18">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/19">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/20">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/21">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/22">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/23">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                            <entry name="ethernet1/24">
+                                                <layer3>
+                                                    <units>
+                                                    </units>
+                                                </layer3>
+                                            </entry>
+                                        </ethernet>
+                                    </interface>
+                                </network>
+                            </entry>
+                        </devices>
+                    </config>
+                </entry>
+            </template>
+            <device-group>
+                <entry name="MyDeviceGroup1">
+                    <devices />
+                    <address>
+                        <entry name="h-1.1.1.1">
+                            <ip-netmask>1.1.1.1</ip-netmask>
+                        </entry>
+                        
+                        <entry name="h-1.1.1.2">
+                            <ip-netmask>1.1.1.2</ip-netmask>
+                        </entry>
+                        
+                        <entry name="h-1.1.1.3">
+                            <ip-netmask>1.1.1.3</ip-netmask>
+                        </entry>
+                        
+                        <entry name="h-1.1.1.4">
+                            <ip-netmask>1.1.1.4</ip-netmask>
+                        </entry>
+                        
+                        <entry name="h-1.1.1.5">
+                            <ip-netmask>1.1.1.5</ip-netmask>
+                        </entry>
+                        
+                    </address>
+                    <address-group>
+                        <entry name="IP Camera">
+                            <static>
+                                <member>h-1.1.1.1</member>
+                                <member>h-1.1.1.3</member>
+                                <member>h-1.1.1.4</member>
+                            </static>
+                        </entry>
+                        <entry name="Wifi Access Point">
+                            <static>
+                                <member>h-1.1.1.2</member>
+                                <member>h-1.1.1.5</member>
+                            </static>
+                        </entry>
+                    </address-group>
+                </entry>
+            </device-group>
+        </entry>
+    </devices>
+</config>

@@ -21,9 +21,13 @@ from netbox_panorama_configpump_plugin.connection_template.models import (
 from netbox_panorama_configpump_plugin.device_config_sync_status.models import (
     DeviceConfigSyncStatus,
 )
+from netbox_panorama_configpump_plugin.device_config_sync_status.panorama import (
+    PanoramaLogger,
+)
 from netbox_panorama_configpump_plugin.utils.helpers import (
     extract_matching_xml_by_xpaths,
     list_item_names_in_xml,
+    sanitize_nested_values,
 )
 
 
@@ -70,18 +74,20 @@ class PanoramaClientTests(TestCase):
             device=self.device1
         ).first()
 
+    # pylint: disable=protected-access
     def test_get_connection_config_with_missing_token(self, mock_get_plugin_config):
 
         mock_get_plugin_config.side_effect = lambda plugin, key, default=None: {}.get(
             key, default
         )
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.get_connection_config()
+            self.device_config_sync_status1._get_connection_config()
         self.assertEqual(
             context.exception.args[0],
             "Token key 'TOKEN_KEY1' not found in plugin configuration.",
         )
 
+    # pylint: disable=protected-access
     def test_get_connection_config(self, mock_get_plugin_config):
 
         mock_get_plugin_config.side_effect = lambda plugin, key, default=None: {
@@ -92,16 +98,36 @@ class PanoramaClientTests(TestCase):
             "ignore_ssl_warnings": True,
         }.get(key, default)
 
-        config = self.device_config_sync_status1.get_connection_config()
+        config = self.device_config_sync_status1._get_connection_config()
         self.assertEqual(config["token"], "token1")
         self.assertEqual(config["request_timeout"], 1234)
         self.assertEqual(config["panorama_url"], "https://panorama.example.com")
         self.assertEqual(config["ignore_ssl_warnings"], True)
 
     @patch(
+        "netbox_panorama_configpump_plugin.device_config_sync_status.models.DeviceConfigSyncStatus.get_rendered_configuration"
+    )
+    @patch(
+        "netbox_panorama_configpump_plugin.device_config_sync_status.models.DeviceConfigSyncStatus.get_xpath_entries"
+    )
+    @patch(
         "netbox_panorama_configpump_plugin.device_config_sync_status.panorama.requests.get"
     )
-    def test_pull_candidate_config(self, mock_requests_get, mock_get_plugin_config):
+    def test_pull_candidate_config(
+        self,
+        mock_requests_get,
+        mock_get_xpath_entries,
+        mock_get_rendered_configuration,
+        mock_get_plugin_config,
+    ):
+
+        # Mock the rendered configuration to return valid XML
+        mock_get_rendered_configuration.return_value = (
+            "<config>rendered configs</config>"
+        )
+
+        # Mock the xpath entries to return whole document (no filtering)
+        mock_get_xpath_entries.return_value = ["/config"]
 
         # Mock the plugin configuration
         mock_get_plugin_config.side_effect = lambda plugin, key, default=None: {
@@ -115,14 +141,18 @@ class PanoramaClientTests(TestCase):
         # Mock the requests response
         mock_response = Mock()
         mock_response.text = "<?xml version='1.0'?><config>test configuration</config>"
+        mock_response.status_code = 200
         mock_response.raise_for_status.return_value = None
         mock_requests_get.return_value = mock_response
 
-        panorama_configuration = self.device_config_sync_status1.pull_candidate_config()
+        self.device_config_sync_status1.pull(PanoramaLogger())
+        self.device_config_sync_status1.refresh_from_db()
 
+        # The XML is pretty-printed by etree.tostring with pretty_print=True
+        expected_config = "<config>test configuration</config>\n"
         self.assertEqual(
-            panorama_configuration,
-            "<?xml version='1.0'?><config>test configuration</config>",
+            self.device_config_sync_status1.panorama_configuration,
+            expected_config,
         )
 
         # Verify the requests.get was called with correct parameters
@@ -154,7 +184,7 @@ class PanoramaClientTests(TestCase):
         mock_requests_get.side_effect = SSLError("SSL certificate verification failed")
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.pull_candidate_config()
+            self.device_config_sync_status1.pull(PanoramaLogger())
 
         self.assertIn(
             "SSL error occurred when connecting to Panorama", str(context.exception)
@@ -178,7 +208,7 @@ class PanoramaClientTests(TestCase):
         mock_requests_get.side_effect = RequestsConnectionError("Connection refused")
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.pull_candidate_config()
+            self.device_config_sync_status1.pull(PanoramaLogger())
 
         self.assertIn(
             "Connection error occurred when connecting to Panorama",
@@ -203,7 +233,7 @@ class PanoramaClientTests(TestCase):
         mock_requests_get.side_effect = Timeout("Request timed out")
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.pull_candidate_config()
+            self.device_config_sync_status1.pull(PanoramaLogger())
 
         self.assertIn(
             "Request timeout occurred when connecting to Panorama",
@@ -228,7 +258,7 @@ class PanoramaClientTests(TestCase):
         mock_requests_get.side_effect = HTTPError("404 Client Error: Not Found")
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.pull_candidate_config()
+            self.device_config_sync_status1.pull(PanoramaLogger())
 
         self.assertIn(
             "HTTP error occurred when connecting to Panorama", str(context.exception)
@@ -252,48 +282,14 @@ class PanoramaClientTests(TestCase):
         mock_requests_get.side_effect = RequestException("Unknown request error")
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.pull_candidate_config()
+            self.device_config_sync_status1.pull(PanoramaLogger())
 
         self.assertIn(
             "Request error occurred when connecting to Panorama", str(context.exception)
         )
         self.assertIn("Unknown request error", str(context.exception))
 
-    @patch(
-        "netbox_panorama_configpump_plugin.device_config_sync_status.panorama.requests.post"
-    )
-    def test_push_candidate_config(self, mock_requests_post, mock_get_plugin_config):
-        """Test push configuration."""
-        mock_get_plugin_config.side_effect = lambda plugin, key, default=None: {
-            "tokens": {
-                "TOKEN_KEY1": "token1",
-                "TOKEN_KEY2": "token2",
-            },
-            "ignore_ssl_warnings": True,
-        }.get(key, default)
-
-        # Mock the requests response
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.raise_for_status.return_value = None
-        mock_requests_post.return_value = mock_response
-
-        response = self.device_config_sync_status1.push_candidate_config(
-            self.device_config_sync_status1.get_rendered_configuration()
-        )
-
-        # Assertions
-        self.assertEqual(response, 200)
-
-        # Verify the requests.post was called with correct parameters
-        mock_requests_post.assert_called_once()
-        call_args = mock_requests_post.call_args
-        self.assertIn("files", call_args.kwargs)
-        self.assertEqual(
-            call_args.kwargs["verify"], False
-        )  # ignore_ssl_warnings is True
-        self.assertEqual(call_args.kwargs["timeout"], 1234)
-
+    # pylint: disable=protected-access
     @patch(
         "netbox_panorama_configpump_plugin.device_config_sync_status.panorama.requests.post"
     )
@@ -311,8 +307,8 @@ class PanoramaClientTests(TestCase):
         mock_requests_post.side_effect = SSLError("SSL certificate verification failed")
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.push_candidate_config(
-                self.device_config_sync_status1.get_rendered_configuration()
+            self.device_config_sync_status1._panorama_post(
+                "import", "configuration", "<config>test</config>"
             )
 
         self.assertIn(
@@ -320,6 +316,7 @@ class PanoramaClientTests(TestCase):
         )
         self.assertIn("SSL certificate verification failed", str(context.exception))
 
+    # pylint: disable=protected-access
     @patch(
         "netbox_panorama_configpump_plugin.device_config_sync_status.panorama.requests.post"
     )
@@ -337,8 +334,8 @@ class PanoramaClientTests(TestCase):
         mock_requests_post.side_effect = RequestsConnectionError("Connection refused")
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.push_candidate_config(
-                self.device_config_sync_status1.get_rendered_configuration()
+            self.device_config_sync_status1._panorama_post(
+                "import", "configuration", "<config>test</config>"
             )
 
         self.assertIn(
@@ -347,6 +344,7 @@ class PanoramaClientTests(TestCase):
         )
         self.assertIn("Connection refused", str(context.exception))
 
+    # pylint: disable=protected-access
     @patch(
         "netbox_panorama_configpump_plugin.device_config_sync_status.panorama.requests.post"
     )
@@ -364,8 +362,8 @@ class PanoramaClientTests(TestCase):
         mock_requests_post.side_effect = Timeout("Request timed out")
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.push_candidate_config(
-                self.device_config_sync_status1.get_rendered_configuration()
+            self.device_config_sync_status1._panorama_post(
+                "import", "configuration", "<config>test</config>"
             )
 
         self.assertIn(
@@ -374,6 +372,7 @@ class PanoramaClientTests(TestCase):
         )
         self.assertIn("Request timed out", str(context.exception))
 
+    # pylint: disable=protected-access
     @patch(
         "netbox_panorama_configpump_plugin.device_config_sync_status.panorama.requests.post"
     )
@@ -393,8 +392,8 @@ class PanoramaClientTests(TestCase):
         )
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.push_candidate_config(
-                self.device_config_sync_status1.get_rendered_configuration()
+            self.device_config_sync_status1._panorama_post(
+                "import", "configuration", "<config>test</config>"
             )
 
         self.assertIn(
@@ -402,6 +401,7 @@ class PanoramaClientTests(TestCase):
         )
         self.assertIn("500 Server Error: Internal Server Error", str(context.exception))
 
+    # pylint: disable=protected-access
     @patch(
         "netbox_panorama_configpump_plugin.device_config_sync_status.panorama.requests.post"
     )
@@ -419,8 +419,8 @@ class PanoramaClientTests(TestCase):
         mock_requests_post.side_effect = RequestException("Unknown request error")
 
         with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.push_candidate_config(
-                self.device_config_sync_status1.get_rendered_configuration()
+            self.device_config_sync_status1._panorama_post(
+                "import", "configuration", "<config>test</config>"
             )
 
         self.assertIn(
@@ -627,3 +627,207 @@ class PanoramaClientTests(TestCase):
         root = ET.fromstring(result)
         self.assertEqual(root.tag, "config")
         self.assertEqual(list(root), [])
+
+    # pylint: disable=protected-access
+    def test_check_pending_changes(self, _):
+        """Test has pending changes."""
+        message_logger = PanoramaLogger()
+        response = """<response status="success"><result>yes</result><location>local</location></response>"""
+        pending_changes_found = self.device_config_sync_status1._check_pending_changes(
+            message_logger, 200, response
+        )
+        self.assertTrue(pending_changes_found)
+        self.assertEqual(message_logger.entries[0].response, "pending changes found")
+
+        message_logger = PanoramaLogger()
+        response = """<response status="success"><result>no</result><location>none</location></response>"""
+        pending_changes_found = self.device_config_sync_status1._check_pending_changes(
+            message_logger, 200, response
+        )
+        self.assertFalse(pending_changes_found)
+        self.assertEqual(message_logger.entries[0].response, "no pending changes found")
+
+        message_logger = PanoramaLogger()
+        response = """<response status="success"><location>none</location></response>"""
+        pending_changes_found = self.device_config_sync_status1._check_pending_changes(
+            message_logger, 200, response
+        )
+        self.assertTrue(pending_changes_found)
+        self.assertEqual(message_logger.entries[0].response, "invalid result format")
+
+        message_logger = PanoramaLogger()
+        response = "broken message"
+        nok = self.device_config_sync_status1._check_pending_changes(
+            message_logger, 200, response
+        )
+        self.assertTrue(nok)
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "Invalid XML: syntax error: line 1, column 0",
+        )
+
+    # pylint: disable=protected-access
+    def test_parse_panorama_response(self, _):
+        """Test parse panorama response."""
+        response = """<response status="success"><result>Successfully acquired lock. Other administrators will not be able to commit configuration until lock is released by xxx.</result></response>"""
+        message_logger = PanoramaLogger()
+        result = self.device_config_sync_status1._parse_panorama_response(
+            message_logger, "take lock", 200, response
+        )
+        self.assertTrue(result["status"])
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "Successfully acquired lock. Other administrators will not be able to commit configuration until lock is released by xxx.",
+        )
+
+        message_logger = PanoramaLogger()
+        response = """<response status="error"><msg><line>Config for scope shared is currently locked by xxx</line></msg></response>"""
+        result = self.device_config_sync_status1._parse_panorama_response(
+            message_logger, "take lock", 200, response
+        )
+        self.assertFalse(result["status"])
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "Config for scope shared is currently locked by xxx",
+        )
+
+        message_logger = PanoramaLogger()
+        response = "<response></response>"
+        result = self.device_config_sync_status1._parse_panorama_response(
+            message_logger, "take lock", 200, response
+        )
+        self.assertFalse(result["status"])
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "invalid status format",
+        )
+
+        message_logger = PanoramaLogger()
+        response = """<response status="success"><result></result></response>"""
+        result = self.device_config_sync_status1._parse_panorama_response(
+            message_logger, "take lock", 200, response
+        )
+        self.assertTrue(result["status"])
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "empty message",
+        )
+
+        message_logger = PanoramaLogger()
+        response = "broken message"
+        result = self.device_config_sync_status1._parse_panorama_response(
+            message_logger, "take lock", 200, response
+        )
+        self.assertFalse(result["status"])
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "Invalid XML: syntax error: line 1, column 0",
+        )
+
+        # Test nested result message structure
+        message_logger = PanoramaLogger()
+        response = """<response status="success"><result><msg><line><msg><line>Config loaded from nb-test_device_b.xml</line></msg></line></msg></result></response>"""
+        result = self.device_config_sync_status1._parse_panorama_response(
+            message_logger, "take lock", 200, response
+        )
+        self.assertTrue(result["status"])
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "Config loaded from nb-test_device_b.xml",
+        )
+
+        # Test plain string msg (not a dict)
+        message_logger = PanoramaLogger()
+        response = (
+            """<response status="error"><msg>Simple error message</msg></response>"""
+        )
+        result = self.device_config_sync_status1._parse_panorama_response(
+            message_logger, "take lock", 200, response
+        )
+        self.assertFalse(result["status"])
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "Simple error message",
+        )
+
+    # def test_commit_push(self, _):
+    #     """Test push configuration."""
+
+    #     # Read the panorama config file
+    #     test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
+    #     config_file_path = os.path.join(test_data_dir, "panorama_config5.xml")
+
+    #     with open(config_file_path, "r", encoding="utf-8") as f:
+    #         template_content = f.read()
+
+    #     config_template = ConfigTemplate.objects.create(
+    #         name="Template B",
+    #         template_code=template_content,
+    #     )
+    #     platform = Platform.objects.create(
+    #         name="platform-b", slug="platform-b", config_template=config_template
+    #     )
+    #     device = Device.objects.create(
+    #         name="Device B",
+    #         role=self.device_role1,
+    #         device_type=self.device_type1,
+    #         site=self.site1,
+    #         platform=platform,
+    #     )
+    #     connection_template = ConnectionTemplate.objects.create(
+    #         name="Template B",
+    #         panorama_url="https://16.171.4.254",
+    #         token_key="TOKEN_KEY1",
+    #         request_timeout=60,
+    #         file_name_prefix="nb-test",
+    #     )
+    #     connection = Connection.objects.create(
+    #         name="Connection B",
+    #         connection_template=connection_template,
+    #     )
+    #     device_config_sync_status = DeviceConfigSyncStatus.objects.create(
+    #         device=device,
+    #         connection=connection,
+    #     )
+    #     message_logger = PanoramaLogger()
+    #     device_config_sync_status.pull(message_logger)
+
+    #     message_logger = PanoramaLogger()
+    #     ok = device_config_sync_status.push(message_logger)
+    #     print("status", ok)
+    #     print(message_logger.to_sanitized_dict())
+
+    def test_sanitize_nested_values(self, mock_get_plugin_config):
+
+        mock_get_plugin_config.side_effect = lambda plugin, key, default=None: {
+            "tokens": {
+                "PANO1_TOKEN": "token1",
+                "TOKEN_KEY2": "token2",
+            },
+            "ignore_ssl_warnings": True,
+        }.get(key, default)
+
+        nested_values = [
+            {
+                "call_type": "some key=abcd 0x1234567890 efg",
+                "change_id": "some key=abcd 0x1234567890 efg",
+                "http_status_code": "some key=abcd 0x1234567890 efg",
+                "response": "some key=abcd 0x1234567890 efg",
+                "status": "some key=abcd 0x1234567890 efg",
+                "timestamp": "some key=abcd 0x1234567890 efg",
+            },
+        ]
+
+        expected_values = [
+            {
+                "call_type": "some key=*** 0x*** efg",
+                "change_id": "some key=*** 0x*** efg",
+                "http_status_code": "some key=*** 0x*** efg",
+                "response": "some key=*** 0x*** efg",
+                "status": "some key=*** 0x*** efg",
+                "timestamp": "some key=*** 0x*** efg",
+            }
+        ]
+
+        sanitized_values = sanitize_nested_values(nested_values)
+        self.assertEqual(sanitized_values, expected_values)
