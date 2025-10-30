@@ -183,13 +183,13 @@ class PanoramaClientTests(TestCase):
         # Mock SSL error
         mock_requests_get.side_effect = SSLError("SSL certificate verification failed")
 
-        with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.pull(PanoramaLogger())
+        message_logger = PanoramaLogger()
+        self.device_config_sync_status1.pull(message_logger)
 
-        self.assertIn(
-            "SSL error occurred when connecting to Panorama", str(context.exception)
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "SSL error occurred when connecting to Panorama: SSL certificate verification failed",
         )
-        self.assertIn("SSL certificate verification failed", str(context.exception))
 
     @patch(
         "netbox_panorama_configpump_plugin.device_config_sync_status.panorama.requests.get"
@@ -207,14 +207,13 @@ class PanoramaClientTests(TestCase):
         # Mock connection error
         mock_requests_get.side_effect = RequestsConnectionError("Connection refused")
 
-        with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.pull(PanoramaLogger())
+        message_logger = PanoramaLogger()
+        self.device_config_sync_status1.pull(message_logger)
 
-        self.assertIn(
-            "Connection error occurred when connecting to Panorama",
-            str(context.exception),
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "Connection error occurred when connecting to Panorama: Connection refused",
         )
-        self.assertIn("Connection refused", str(context.exception))
 
     @patch(
         "netbox_panorama_configpump_plugin.device_config_sync_status.panorama.requests.get"
@@ -232,14 +231,13 @@ class PanoramaClientTests(TestCase):
         # Mock timeout error
         mock_requests_get.side_effect = Timeout("Request timed out")
 
-        with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.pull(PanoramaLogger())
+        message_logger = PanoramaLogger()
+        self.device_config_sync_status1.pull(message_logger)
 
-        self.assertIn(
-            "Request timeout occurred when connecting to Panorama",
-            str(context.exception),
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "Request timeout occurred when connecting to Panorama: Request timed out",
         )
-        self.assertIn("Request timed out", str(context.exception))
 
     @patch(
         "netbox_panorama_configpump_plugin.device_config_sync_status.panorama.requests.get"
@@ -257,13 +255,13 @@ class PanoramaClientTests(TestCase):
         # Mock HTTP error (e.g., 404, 500)
         mock_requests_get.side_effect = HTTPError("404 Client Error: Not Found")
 
-        with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.pull(PanoramaLogger())
+        message_logger = PanoramaLogger()
+        self.device_config_sync_status1.pull(message_logger)
 
-        self.assertIn(
-            "HTTP error occurred when connecting to Panorama", str(context.exception)
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "HTTP error occurred when connecting to Panorama: 404 Client Error: Not Found",
         )
-        self.assertIn("404 Client Error: Not Found", str(context.exception))
 
     @patch(
         "netbox_panorama_configpump_plugin.device_config_sync_status.panorama.requests.get"
@@ -281,13 +279,13 @@ class PanoramaClientTests(TestCase):
         # Mock general request error
         mock_requests_get.side_effect = RequestException("Unknown request error")
 
-        with self.assertRaises(ValueError) as context:
-            self.device_config_sync_status1.pull(PanoramaLogger())
+        message_logger = PanoramaLogger()
+        self.device_config_sync_status1.pull(message_logger)
 
-        self.assertIn(
-            "Request error occurred when connecting to Panorama", str(context.exception)
+        self.assertEqual(
+            message_logger.entries[0].response,
+            "Request error occurred when connecting to Panorama: Unknown request error",
         )
-        self.assertIn("Unknown request error", str(context.exception))
 
     # pylint: disable=protected-access
     @patch(
@@ -749,53 +747,6 @@ class PanoramaClientTests(TestCase):
             message_logger.entries[0].response,
             "Simple error message",
         )
-
-    # def test_commit_push(self, _):
-    #     """Test push configuration."""
-
-    #     # Read the panorama config file
-    #     test_data_dir = os.path.join(os.path.dirname(__file__), "test_data")
-    #     config_file_path = os.path.join(test_data_dir, "panorama_config5.xml")
-
-    #     with open(config_file_path, "r", encoding="utf-8") as f:
-    #         template_content = f.read()
-
-    #     config_template = ConfigTemplate.objects.create(
-    #         name="Template B",
-    #         template_code=template_content,
-    #     )
-    #     platform = Platform.objects.create(
-    #         name="platform-b", slug="platform-b", config_template=config_template
-    #     )
-    #     device = Device.objects.create(
-    #         name="Device B",
-    #         role=self.device_role1,
-    #         device_type=self.device_type1,
-    #         site=self.site1,
-    #         platform=platform,
-    #     )
-    #     connection_template = ConnectionTemplate.objects.create(
-    #         name="Template B",
-    #         panorama_url="https://16.171.4.254",
-    #         token_key="TOKEN_KEY1",
-    #         request_timeout=60,
-    #         file_name_prefix="nb-test",
-    #     )
-    #     connection = Connection.objects.create(
-    #         name="Connection B",
-    #         connection_template=connection_template,
-    #     )
-    #     device_config_sync_status = DeviceConfigSyncStatus.objects.create(
-    #         device=device,
-    #         connection=connection,
-    #     )
-    #     message_logger = PanoramaLogger()
-    #     device_config_sync_status.pull(message_logger)
-
-    #     message_logger = PanoramaLogger()
-    #     ok = device_config_sync_status.push(message_logger)
-    #     print("status", ok)
-    #     print(message_logger.to_sanitized_dict())
 
     def test_sanitize_nested_values(self, mock_get_plugin_config):
 

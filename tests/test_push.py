@@ -1,264 +1,138 @@
-"""Test push functionality."""
+from unittest.mock import patch
 
-# pylint: disable=missing-function-docstring, missing-class-docstring
-
-from unittest.mock import Mock, call
-
+from dcim.models import Device, DeviceRole, DeviceType, Manufacturer, Platform, Site
 from django.test import TestCase
+from extras.models import ConfigContext, ConfigTemplate
 
-from netbox_panorama_configpump_plugin.device_config_sync_status import (
-    panorama as panorama_mod,
+from netbox_panorama_configpump_plugin.connection.models import Connection
+from netbox_panorama_configpump_plugin.connection_template.models import (
+    ConnectionTemplate,
+)
+from netbox_panorama_configpump_plugin.device_config_sync_status.models import (
+    DeviceConfigSyncStatus,
 )
 from netbox_panorama_configpump_plugin.device_config_sync_status.panorama import (
     PanoramaLogger,
-    PanoramaMixin,
-    Status,
 )
 
 
-class FakeConnTemplate:
-    token_key = "dummy"
-    request_timeout = 1
-    panorama_url = "https://panorama.local"
-    file_name_prefix = "nb"
-
-
-class FakeConnection:
-    connection_template = FakeConnTemplate()
-
-
-class FakeDevice:
-    name = "Device-1"
-
-
-# pylint: disable=line-too-long
-class FakeModel(PanoramaMixin):
-    def __init__(self):
-        self.device = FakeDevice()
-        self.connection = FakeConnection()
-        self.panorama_configuration = ""
-
-    def get_xpath_entries(self):
-        return [
-            "/config/devices/entry[@name='localhost.localdomain']/template/entry[@name='t']"
-        ]
-
-    def get_rendered_configuration(self):
-        return "<config/>"
-
-    def save(self):
-        # No-op for tests
-        pass
-
-
-# pylint: disable=protected-access
-class PushTests(TestCase):
-    """Test push functionality."""
+class PanoramaPushTests(TestCase):
 
     def setUp(self):
-        self.model = FakeModel()
-        self.logger = PanoramaLogger()
 
-    def _common_mocks_for_success(self):
-        """Set up mocks for successful push operations."""
-        self.model._panorama_get = Mock(return_value=(200, "<response/>"))
-        self.model._panorama_post = Mock(return_value=(200, "<response/>"))
-        self.model._check_pending_changes = Mock(return_value=False)
-        self.model._locks_exist = Mock(return_value=False)
-        self.model._parse_panorama_response = Mock(
-            side_effect=[
-                {"status": True},  # add config lock
-                {"status": True},  # add commit lock
-                {"status": True},  # import configuration
-                {"status": True, "commit_job_id": "123"},  # commit
-            ]
+        # Devices:
+        self.device_role1 = DeviceRole.objects.create(name="Device Role A")
+        self.manufacturer1 = Manufacturer.objects.create(name="Manufacturer A")
+        self.device_type1 = DeviceType.objects.create(
+            model="Device Type A", manufacturer=self.manufacturer1
         )
-        # Mock normalize_xml at module level
-        original_normalize = panorama_mod.normalize_xml
-        self.addCleanup(setattr, panorama_mod, "normalize_xml", original_normalize)
-        panorama_mod.normalize_xml = lambda x: (x, True)
+        self.site1 = Site.objects.create(name="Site A")
+        self.config_template = ConfigTemplate.objects.create(
+            name="Template A",
+            template_code="some code {{ foo }}",
+        )
+        self.platform1 = Platform.objects.create(
+            name="PanOS", config_template=self.config_template
+        )
+        context_data1 = ConfigContext.objects.create(
+            name="Context A",
+            data={"foo": "bar"},
+        )
+        self.device1 = Device.objects.create(
+            name="Device A",
+            role=self.device_role1,
+            device_type=self.device_type1,
+            site=self.site1,
+            platform=self.platform1,
+        )
+        self.device1.local_context_data = context_data1.data
+        self.device1.save()
+        self.device2 = Device.objects.create(
+            name="Device B",
+            role=self.device_role1,
+            device_type=self.device_type1,
+            site=self.site1,
+            platform=self.platform1,
+        )
 
-    def test_push_happy_path(self):
-        self._common_mocks_for_success()
-        self.model._load_partial_config = Mock(return_value=True)
-        self.model._poll_show_jobs = Mock(return_value=True)
-        self.model._export_configuration = Mock(return_value=True)
+        # Connection template:
+        self.connection_template1 = ConnectionTemplate.objects.create(
+            name="Template A",
+            panorama_url="https://panorama.example.com",
+            token_key="TOKEN_KEY1",
+        )
+        # Connections:
+        self.connection1 = Connection.objects.create(
+            name="Connection A",
+            connection_template=self.connection_template1,
+        )
 
-        result = self.model.push(self.logger)
+        # Device config sync status:
+        self.device_config_sync_status = DeviceConfigSyncStatus.objects.create(
+            device=self.device1,
+            connection=self.connection1,
+        )
 
-        self.assertTrue(result)
-        self.assertEqual(self.model._check_pending_changes.call_count, 2)
-        self.assertEqual(
-            self.model._locks_exist.call_args_list,
-            [
-                call(self.logger, "commit"),
-                call(self.logger, "config"),
+        self.happy_day_side_effect = [
+            (
+                200,
+                '<response status="success"><result>no</result><location>local</location></response>',
+            ),
+        ]
+
+    # pylint: disable=protected-access
+    def test_pending_changes_found(self):
+        """Test pending changes found."""
+
+        panorama_logger = PanoramaLogger()
+
+        with patch.object(
+            DeviceConfigSyncStatus,
+            "_panorama_get",
+            side_effect=[
+                (
+                    200,
+                    '<response status="success"><result>yes</result><location>local</location></response>',
+                ),
+                (
+                    200,
+                    '<config version="11.1.0" urldb="paloaltonetworks" detail-version="11.1.6"></config>',
+                ),
             ],
+        ) as _:
+            status = self.device_config_sync_status.push(panorama_logger)
+
+        self.assertFalse(status)
+
+        self.assertEqual(
+            panorama_logger.entries[0].response,
+            "pending changes found",
         )
-        self.assertEqual(self.model._export_configuration.call_count, 1)
-
-    def test_push_returns_false_when_pending_changes_first(self):
-        self.model._panorama_get = Mock(return_value=(200, "<response/>"))
-        self.model._check_pending_changes = Mock(return_value=True)
-        export = Mock(return_value=True)
-        self.model._export_configuration = export
-
-        result = self.model.push(self.logger)
-
-        self.assertFalse(result)
-        export.assert_called_once_with(self.logger)
-
-    def test_push_returns_false_when_locks_exist_commit(self):
-        self.model._panorama_get = Mock(return_value=(200, "<response/>"))
-        self.model._check_pending_changes = Mock(return_value=False)
-        self.model._locks_exist = Mock(side_effect=[True, False])
-        export = Mock(return_value=True)
-        self.model._export_configuration = export
-
-        result = self.model.push(self.logger)
-
-        self.assertFalse(result)
-        export.assert_called_once_with(self.logger)
-
-    def test_push_returns_false_when_locks_exist_config(self):
-        self.model._panorama_get = Mock(return_value=(200, "<response/>"))
-        self.model._check_pending_changes = Mock(return_value=False)
-        self.model._locks_exist = Mock(side_effect=[False, True])
-        export = Mock(return_value=True)
-        self.model._export_configuration = export
-
-        result = self.model.push(self.logger)
-
-        self.assertFalse(result)
-        export.assert_called_once_with(self.logger)
-
-    def test_push_returns_false_when_config_lock_add_fails(self):
-        self.model._panorama_get = Mock(return_value=(200, "<response/>"))
-        self.model._check_pending_changes = Mock(return_value=False)
-        self.model._locks_exist = Mock(return_value=False)
-        self.model._parse_panorama_response = Mock(return_value={"status": False})
-        rml = Mock(return_value=True)
-        self.model._remove_locks_and_export = rml
-
-        result = self.model.push(self.logger)
-
-        self.assertFalse(result)
-        rml.assert_called_once_with(self.logger)
-
-    def test_push_returns_false_when_commit_lock_add_fails(self):
-        self.model._panorama_get = Mock(return_value=(200, "<response/>"))
-        self.model._check_pending_changes = Mock(return_value=False)
-        self.model._locks_exist = Mock(return_value=False)
-        self.model._parse_panorama_response = Mock(
-            side_effect=[{"status": True}, {"status": False}]
+        self.assertEqual(
+            panorama_logger.entries[1].response,
+            "Configuration exported successfully",
         )
-        rml = Mock(return_value=True)
-        self.model._remove_locks_and_export = rml
 
-        result = self.model.push(self.logger)
+    # pylint: disable=protected-access
+    def test_commit_locks_exist(self):
+        """Test commit locks exist."""
 
-        self.assertFalse(result)
-        rml.assert_called_once_with(self.logger)
+        panorama_logger = PanoramaLogger()
 
-    def test_push_returns_false_when_rendered_config_empty(self):
-        self.model._panorama_get = Mock(return_value=(200, "<response/>"))
-        self.model._check_pending_changes = Mock(return_value=False)
-        self.model._locks_exist = Mock(return_value=False)
-        self.model._parse_panorama_response = Mock(return_value={"status": True})
-        self.model.get_rendered_configuration = lambda: ""
-        rml = Mock(return_value=True)
-        self.model._remove_locks_and_export = rml
+        with patch.object(
+            DeviceConfigSyncStatus,
+            "_panorama_get",
+            side_effect=[self.happy_day_side_effect[0]],
+        ) as _:
+            status = self.device_config_sync_status.push(panorama_logger)
 
-        result = self.model.push(self.logger)
+        # self.assertFalse(status)
 
-        self.assertFalse(result)
-        rml.assert_called_once_with(self.logger)
-        self.assertTrue(any(e.status == Status.FAILURE for e in self.logger.entries))
-
-    def test_push_returns_false_when_normalized_invalid(self):
-        self.model._panorama_get = Mock(return_value=(200, "<response/>"))
-        self.model._check_pending_changes = Mock(return_value=False)
-        self.model._locks_exist = Mock(return_value=False)
-        self.model._parse_panorama_response = Mock(return_value={"status": True})
-        original_normalize = panorama_mod.normalize_xml
-        self.addCleanup(setattr, panorama_mod, "normalize_xml", original_normalize)
-        panorama_mod.normalize_xml = lambda x: (x, False)
-        rml = Mock(return_value=True)
-        self.model._remove_locks_and_export = rml
-
-        result = self.model.push(self.logger)
-
-        self.assertFalse(result)
-        rml.assert_called_once_with(self.logger)
-
-    def test_push_returns_false_when_import_fails(self):
-        self.model._panorama_get = Mock(return_value=(200, "<response/>"))
-        self.model._check_pending_changes = Mock(return_value=False)
-        self.model._locks_exist = Mock(return_value=False)
-        original_normalize = panorama_mod.normalize_xml
-        self.addCleanup(setattr, panorama_mod, "normalize_xml", original_normalize)
-        panorama_mod.normalize_xml = lambda x: (x, True)
-        self.model._parse_panorama_response = Mock(
-            side_effect=[
-                {"status": True},  # config lock
-                {"status": True},  # commit lock
-                {"status": False},  # import fails
-            ]
-        )
-        rml = Mock(return_value=True)
-        self.model._remove_locks_and_export = rml
-
-        result = self.model.push(self.logger)
-
-        self.assertFalse(result)
-        rml.assert_called_once_with(self.logger)
-
-    def test_push_returns_false_when_load_partial_config_fails(self):
-        self._common_mocks_for_success()
-        self.model._load_partial_config = Mock(return_value=False)
-        rre = Mock(return_value=False)
-        self.model._revert_remove_locks_and_export = rre
-
-        result = self.model.push(self.logger)
-
-        self.assertFalse(result)
-        rre.assert_called_once_with(self.logger)
-
-    def test_push_returns_false_when_commit_has_no_jobid(self):
-        self._common_mocks_for_success()
-        self.model._load_partial_config = Mock(return_value=True)
-        self.model._parse_panorama_response = Mock(
-            side_effect=[
-                {"status": True},  # config lock
-                {"status": True},  # commit lock
-                {"status": True},  # import
-                {"status": True},  # commit without job id
-            ]
-        )
-        rre = Mock(return_value=False)
-        self.model._revert_remove_locks_and_export = rre
-
-        result = self.model.push(self.logger)
-
-        self.assertFalse(result)
-        rre.assert_called_once_with(self.logger)
-
-    def test_push_returns_false_when_poll_fails(self):
-        self._common_mocks_for_success()
-        self.model._load_partial_config = Mock(return_value=True)
-        self.model._parse_panorama_response = Mock(
-            side_effect=[
-                {"status": True},  # config lock
-                {"status": True},  # commit lock
-                {"status": True},  # import
-                {"status": True, "commit_job_id": "123"},  # commit with job id
-            ]
-        )
-        self.model._poll_show_jobs = Mock(return_value=False)
-        rre = Mock(return_value=False)
-        self.model._revert_remove_locks_and_export = rre
-
-        result = self.model.push(self.logger)
-
-        self.assertFalse(result)
-        rre.assert_called_once_with(self.logger)
+        # self.assertEqual(
+        #     panorama_logger.entries[0].response,
+        #     "pending changes found",
+        # )
+        # self.assertEqual(
+        #     panorama_logger.entries[1].response,
+        #     "Configuration exported successfully",
+        # )

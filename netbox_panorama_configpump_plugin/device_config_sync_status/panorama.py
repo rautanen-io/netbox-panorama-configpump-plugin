@@ -585,34 +585,47 @@ class PanoramaMixin:
     def _export_configuration(self, panorama_logger: PanoramaLogger) -> bool:
         """Export the configuration from Panorama."""
 
-        http_status_code, response = self._panorama_get(
-            {
-                "type": "export",
-                "category": "configuration",
-            }
-        )
-        if http_status_code != 200:
+        call_type = "export configuration"
+
+        try:
+            http_status_code, response = self._panorama_get(
+                {
+                    "type": "export",
+                    "category": "configuration",
+                }
+            )
+            if http_status_code != 200:
+                panorama_logger.log(
+                    Status.FAILURE,
+                    http_status_code,
+                    call_type,
+                    "HTTP status code is not 200",
+                )
+                return False
+
+            filtered_panorama_config = extract_matching_xml_by_xpaths(
+                response, self.get_xpath_entries()
+            )
+            self.panorama_configuration = filtered_panorama_config
+            self.save()
+
+            panorama_logger.log(
+                Status.SUCCESS,
+                http_status_code,
+                call_type,
+                "Configuration exported successfully",
+            )
+            return True
+
+        # pylint: disable=broad-exception-caught
+        except Exception as e:
             panorama_logger.log(
                 Status.FAILURE,
-                http_status_code,
-                "export configuration",
-                "HTTP status code is not 200",
+                None,
+                ("Unknown error while exporting the configuration."),
+                str(e),
             )
             return False
-
-        filtered_panorama_config = extract_matching_xml_by_xpaths(
-            response, self.get_xpath_entries()
-        )
-        self.panorama_configuration = filtered_panorama_config
-        self.save()
-
-        panorama_logger.log(
-            Status.SUCCESS,
-            http_status_code,
-            "export configuration",
-            "Configuration exported successfully",
-        )
-        return True
 
     def _locks_exist(self, panorama_logger: PanoramaLogger, lock_type: str) -> bool:
         """Check if there are locks."""
