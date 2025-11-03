@@ -61,13 +61,6 @@ class PanoramaPushTests(TestCase):
         )
         self.device1.local_context_data = context_data1.data
         self.device1.save()
-        self.device2 = Device.objects.create(
-            name="Device B",
-            role=self.device_role1,
-            device_type=self.device_type1,
-            site=self.site1,
-            platform=self.platform1,
-        )
 
         # Connection template:
         self.connection_template1 = ConnectionTemplate.objects.create(
@@ -91,11 +84,15 @@ class PanoramaPushTests(TestCase):
         self.mocked_side_effects = {
             "pending_changes": (
                 200,
-                '<response status="success"><result>yes</result><location>local</location></response>',
+                (
+                    """<response status="success"><result><journal>"""
+                    """<entry><xpath>/config/devices/entry[@name=&#39;localhost.localdomain&#39;]/template/entry[@name=&#39;MyTemplate1&#39;]/config/devices/entry[@name=&#39;localhost.localdomain&#39;]/vsys/entry[@name=&#39;vsys1&#39;]/import/network/interface/member[text()=&#39;ethernet1/1.3&#39;]</xpath><owner>xxx</owner><action> CREATE</action><admin-history>xxx</admin-history><component-type>template</component-type></entry>"""
+                    """</journal></result></response>"""
+                ),
             ),
             "no_pending_changes": (
                 200,
-                '<response status="success"><result>no</result><location>local</location></response>',
+                '<response status="success"><result></result></response>',
             ),
             "export_configuration_ok": (
                 200,
@@ -984,3 +981,68 @@ class PanoramaPushTests(TestCase):
             panorama_logger.entries[10].response,
             "Configuration exported successfully",
         )
+
+
+# class PanoramaLivePushTests(TestCase):
+#     """Tests for the Panorama push functionality against a live Panorama instance."""
+
+#     def setUp(self):
+
+#         # Devices:
+#         self.device_role1 = DeviceRole.objects.create(name="Device Role A")
+#         self.manufacturer1 = Manufacturer.objects.create(name="Manufacturer A")
+#         self.device_type1 = DeviceType.objects.create(
+#             model="Device Type A", manufacturer=self.manufacturer1
+#         )
+#         self.site1 = Site.objects.create(name="Site A")
+
+#         config_string = (
+#             Path(__file__).parent / "test_data" / "panorama_config1.xml"
+#         ).read_text(encoding="utf-8")
+#         # pylint: disable=line-too-long
+#         self.config_template = ConfigTemplate.objects.create(
+#             name="Template A",
+#             template_code=config_string,
+#         )
+#         self.platform1 = Platform.objects.create(
+#             name="PanOS", config_template=self.config_template
+#         )
+#         context_data1 = ConfigContext.objects.create(
+#             name="Context A",
+#             data={"foo": "bar"},
+#         )
+#         self.device1 = Device.objects.create(
+#             name="Device A",
+#             role=self.device_role1,
+#             device_type=self.device_type1,
+#             site=self.site1,
+#             platform=self.platform1,
+#         )
+#         self.device1.local_context_data = context_data1.data
+#         self.device1.save()
+
+#         # Connection template:
+#         self.connection_template1 = ConnectionTemplate.objects.create(
+#             name="Template A",
+#             panorama_url="https://< any panorama url >",
+#             token_key="TOKEN_KEY1",
+#         )
+#         # Connections:
+#         self.connection1 = Connection.objects.create(
+#             name="Connection A",
+#             connection_template=self.connection_template1,
+#         )
+
+#         # Device config sync status:
+#         self.device_config_sync_status = DeviceConfigSyncStatus.objects.create(
+#             device=self.device1,
+#             connection=self.connection1,
+#         )
+
+#     def test_push_to_live_panorama(self):
+#         """Test push to a live Panorama instance."""
+
+#         panorama_logger = PanoramaLogger()
+#         status = self.device_config_sync_status.push(panorama_logger)
+#         print(status)
+#         print(panorama_logger.to_sanitized_dict())

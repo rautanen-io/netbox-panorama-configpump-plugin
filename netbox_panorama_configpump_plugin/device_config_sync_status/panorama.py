@@ -321,32 +321,49 @@ class PanoramaMixin:
                 f"Unexpected error occurred when connecting to Panorama: {exc}"
             ) from exc
 
-    def _check_pending_changes(
+    def _list_changes(
         self, panorama_logger: PanoramaLogger, http_status_code: int, response: str
     ) -> bool:
-        """Check if there are pending changes."""
+        """List the changes."""
 
-        call_type = "check pending changes"
+        call_type = "list changes"
 
         try:
             data = xmltodict.parse(response)
             response_dict = data.get("response") or {}
-            result = response_dict.get("result")
 
-            if not result or not isinstance(result, str):
+            # Status:
+            status = response_dict.get("@status")
+
+            # Status missing:
+            if not status or not isinstance(status, str):
                 panorama_logger.log(
-                    Status.FAILURE, http_status_code, call_type, "invalid result format"
+                    Status.FAILURE, http_status_code, call_type, "invalid status format"
                 )
                 return True
-            if result.strip().lower() == "yes":
+
+            # Not success:
+            if status.strip().lower() != "success":
+                panorama_logger.log(
+                    Status.FAILURE, http_status_code, call_type, "unknown status"
+                )
+                return True
+
+            result = response_dict.get("result")
+            if not result:
+                panorama_logger.log(
+                    Status.SUCCESS,
+                    http_status_code,
+                    call_type,
+                    "no pending changes found",
+                )
+                return False
+            else:
                 panorama_logger.log(
                     Status.FAILURE, http_status_code, call_type, "pending changes found"
                 )
                 return True
-            panorama_logger.log(
-                Status.SUCCESS, http_status_code, call_type, "no pending changes found"
-            )
-            return False
+
         except ExpatError as e:
             panorama_logger.log(Status.FAILURE, None, call_type, f"Invalid XML: {e}")
             return True
@@ -704,12 +721,12 @@ class PanoramaMixin:
         # In case something weird happens, we try to remove the locks and export the latest config.
         try:
             # Pending changes?
-            pending_changes_found = self._check_pending_changes(
+            pending_changes_found = self._list_changes(
                 panorama_logger,
                 *self._panorama_get(
                     {
                         "type": "op",
-                        "cmd": "<check><pending-changes></pending-changes></check>",
+                        "cmd": "<show><config><list><changes></changes></list></config></show>",
                     },
                 ),
             )
@@ -760,12 +777,12 @@ class PanoramaMixin:
                 return False
 
             # Pending changes?
-            pending_changes_found = self._check_pending_changes(
+            pending_changes_found = self._list_changes(
                 panorama_logger,
                 *self._panorama_get(
                     {
                         "type": "op",
-                        "cmd": "<check><pending-changes></pending-changes></check>",
+                        "cmd": "<show><config><list><changes></changes></list></config></show>",
                     },
                 ),
             )
