@@ -627,35 +627,41 @@ class PanoramaClientTests(TestCase):
         self.assertEqual(list(root), [])
 
     # pylint: disable=protected-access
-    def test_check_pending_changes(self, _):
+    def test_list_changes(self, _):
         """Test has pending changes."""
         message_logger = PanoramaLogger()
-        response = """<response status="success"><result>yes</result><location>local</location></response>"""
-        pending_changes_found = self.device_config_sync_status1._check_pending_changes(
-            message_logger, 200, response
+        response = (
+            """<response status="success"><result><journal>"""
+            """<entry><xpath>/config/devices/entry[@name=&#39;localhost.localdomain&#39;]/template/entry[@name=&#39;MyTemplate1&#39;]/config/devices/entry[@name=&#39;localhost.localdomain&#39;]/vsys/entry[@name=&#39;vsys1&#39;]/import/network/interface/member[text()=&#39;ethernet1/1.3&#39;]</xpath><owner>xxx</owner><action> CREATE</action><admin-history>xxx</admin-history><component-type>template</component-type></entry>"""
+            """</journal></result></response>"""
+        )
+        pending_changes_found = self.device_config_sync_status1._list_changes(
+            message_logger,
+            200,
+            response,
         )
         self.assertTrue(pending_changes_found)
         self.assertEqual(message_logger.entries[0].response, "pending changes found")
 
         message_logger = PanoramaLogger()
-        response = """<response status="success"><result>no</result><location>none</location></response>"""
-        pending_changes_found = self.device_config_sync_status1._check_pending_changes(
+        response = """<response status="success"><result></result></response>"""
+        pending_changes_found = self.device_config_sync_status1._list_changes(
             message_logger, 200, response
         )
         self.assertFalse(pending_changes_found)
         self.assertEqual(message_logger.entries[0].response, "no pending changes found")
 
         message_logger = PanoramaLogger()
-        response = """<response status="success"><location>none</location></response>"""
-        pending_changes_found = self.device_config_sync_status1._check_pending_changes(
+        response = """<response><result></result></response>"""
+        pending_changes_found = self.device_config_sync_status1._list_changes(
             message_logger, 200, response
         )
         self.assertTrue(pending_changes_found)
-        self.assertEqual(message_logger.entries[0].response, "invalid result format")
+        self.assertEqual(message_logger.entries[0].response, "invalid status format")
 
         message_logger = PanoramaLogger()
         response = "broken message"
-        nok = self.device_config_sync_status1._check_pending_changes(
+        nok = self.device_config_sync_status1._list_changes(
             message_logger, 200, response
         )
         self.assertTrue(nok)
