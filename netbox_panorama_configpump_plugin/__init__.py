@@ -4,7 +4,7 @@ from __future__ import annotations
 
 __author__ = """Veikko Pankakoski"""
 __email__ = "veikko@rautanen.io"
-__version__ = "1.0.2"
+__version__ = "1.0.6"
 
 
 from netbox.plugins import PluginConfig
