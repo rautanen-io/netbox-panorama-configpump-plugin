@@ -47,7 +47,7 @@ Refer to [EXAMPLES.md](EXAMPLES.md) for screenshots of each step.
 
 ### Commit behavior
 
-- **Locks**: On push, the plugin first verifies there are no pending changes or existing locks, then takes both a config lock and a commit lock with a descriptive comment containing the NetBox change ID.
+- **Locks**: On push, the plugin first verifies there are no uncommitted changes or existing locks, then takes both a config lock and a commit lock with a descriptive comment containing the NetBox change ID.
 - **Upload**: The rendered configuration (validated and normalized XML) is uploaded to Panorama as a file.
 - **XPath load**: The plugin loads the uploaded file into Panorama using partial replace mode for each configured XPath. XPaths are, by default, deduced from the rendered XML for `template` and `device-group` entries, or you can provide manual XPath entries per device.
 - **Commit**: Performs a full commit with the same change description, captures a commit job ID, and polls until the job reports success.
