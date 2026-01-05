@@ -112,6 +112,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, make commands, testing, 
 ## Known limitations
 
 - Monaco Editor assets are currently loaded from a CDN. If the NetBox UI cannot reach the Internet, the diff view will not load. Bundling the assets locally may be added later.
+- There are multiple practical limitations due to how Panorama handles templates, such as:
+  - In panorama different configuration sections of virtual-router cannot be splitted into multiple templates. This means you need either generate all configurations of the template from NetBox or utilize the functionality which allows only specific XPaths to be overwritten by NetBox generated configs.
+  - If you want to bind interfaces to zones (or virtual-systems, virtual-routers) using ConfigPump, all interfaces for those zones needs to come from NetBox. This is because of there is single list under zone for interface bindings.
 
 ## Security notes
 
