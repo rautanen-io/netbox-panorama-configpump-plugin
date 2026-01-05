@@ -45,6 +45,9 @@ Refer to [EXAMPLES.md](EXAMPLES.md) for screenshots of each step.
 >
 > To avoid losing manual configurations, keep any manually managed settings in **separate** templates and device groups that are not managed by ConfigPump. You can combine both manual and NetBox-managed configurations by using Panorama’s Template Stacks and Device Group Hierarchy features.
 
+> [!NOTE]
+> If you are deploying in brownfield environment the NetBox generated XML elements might be in different order compared to what is already in Panorama. Because of this you will see same elements to be removed and added. Good news is when you push configs to Panorama, it repects the order they are pushed. This means the problem will dissapear after first push. Nevertheless, go carefully through all the diffs before pushing.
+
 ### Commit behavior
 
 - **Locks**: On push, the plugin first verifies there are no uncommitted changes or existing locks, then takes both a config lock and a commit lock with a descriptive comment containing the NetBox change ID.
