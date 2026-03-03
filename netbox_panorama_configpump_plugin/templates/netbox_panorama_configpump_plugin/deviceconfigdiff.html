@@ -18,6 +18,7 @@
                         <div class="d-flex gap-2">
                             {% include 'netbox_panorama_configpump_plugin/theme_dropdown.html' %}
                             {% include 'netbox_panorama_configpump_plugin/view_toggle_button.html' %}
+                            {% include 'netbox_panorama_configpump_plugin/format_toggle_button.html' %}
                         </div>
                     </div>
                 </div>
@@ -53,7 +54,17 @@
             "modifiedConfig": "{{ rendered_configuration | escapejs }}"
         }
     </script>
+    <script src="{% static 'netbox_panorama_configpump_plugin/js/vendor/js-yaml.min.js' %}"></script>
+    <script>
+        window.jsyaml = window.jsyaml || this.jsyaml || this.YAML;
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs/loader.js"></script>
+    <script>
+        // Ensure js-yaml is available globally for the diff script
+        if (typeof window.jsyaml === 'undefined' && typeof jsyaml !== 'undefined') {
+            window.jsyaml = jsyaml;
+        }
+    </script>
     <script src="{% static 'netbox_panorama_configpump_plugin/js/config-diff.js' %}"></script>
 
 {% endblock %}
