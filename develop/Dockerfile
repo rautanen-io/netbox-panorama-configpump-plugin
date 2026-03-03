@@ -8,8 +8,7 @@ RUN set -x \
     && adduser --system --group netbox \
     && curl -sSLO https://github.com/netbox-community/netbox/archive/refs/tags/v${NETBOX_VERSION}.tar.gz \
     && tar xzf v${NETBOX_VERSION}.tar.gz \
-    && mv -fv /opt/netbox-${NETBOX_VERSION} /opt/netbox \
-    && chown -cR netbox:root /opt/netbox/netbox/media
+    && mv -fv /opt/netbox-${NETBOX_VERSION} /opt/netbox
 
 RUN set -x \
     && cd /opt \
