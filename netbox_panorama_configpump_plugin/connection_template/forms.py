@@ -77,6 +77,7 @@ class ConnectionTemplateForm(NetBoxModelForm):
                 "File name prefix for this template. XML files with this prefix "
                 "will be uploaded to Panorama. The format of the file name is "
                 "&lt;prefix&gt;_&lt;device_name&gt;.xml. Leave blank to use default. "
+                "The total length of the file name must not exceed 32 characters. "
                 f"Default: {default_filename_prefix}"
             )
 

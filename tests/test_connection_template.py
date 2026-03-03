@@ -136,7 +136,7 @@ class ConnectionTemplateAPIViewTests(TestPanoramaConfigPumpMixing):
         # pylint: disable=line-too-long
         with patch(
             "netbox_panorama_configpump_plugin.connection_template.models.get_plugin_config",
-            side_effect=[45, "netbox-panorama123"],
+            side_effect=[45, "netbox123"],
         ):
             response = self.post(
                 "connectiontemplate-list",
@@ -153,7 +153,7 @@ class ConnectionTemplateAPIViewTests(TestPanoramaConfigPumpMixing):
         self.assertEqual(obj.name, "Template A")
         self.assertEqual(obj.panorama_url, "https://panorama.example.com")
         self.assertEqual(obj.token_key, "API_SECRET")
-        self.assertEqual(obj.file_name_prefix, "netbox-panorama123")
+        self.assertEqual(obj.file_name_prefix, "netbox123")
         self.assertEqual(obj.request_timeout, 45)
 
 
@@ -166,7 +166,7 @@ class ConnectionTemplateFormTests(TestCase):
             new=lambda plugin, key=None, default=None: {
                 "tokens": {"TOKEN_KEY1": "secret-token-value"},
                 "default_request_timeout": 60,
-                "default_filename_prefix": "netbox-panorama",
+                "default_filename_prefix": "netbox",
                 "top_level_menu": True,
             }.get(key, default),
         ):
@@ -190,7 +190,7 @@ class ConnectionTemplateFormTests(TestCase):
             self.assertEqual(obj.panorama_url, "https://panorama.example.com")
             self.assertEqual(obj.token_key, "TOKEN_KEY1")
             self.assertEqual(obj.request_timeout, 60)
-            self.assertEqual(obj.file_name_prefix, "netbox-panorama")
+            self.assertEqual(obj.file_name_prefix, "netbox")
 
     def test_form_with_all_fields_filled(self):
         with patch(
@@ -199,7 +199,7 @@ class ConnectionTemplateFormTests(TestCase):
             new=lambda plugin, key=None, default=None: {
                 "tokens": {"TOKEN_KEY1": "secret-token-value"},
                 "default_request_timeout": 60,
-                "default_filename_prefix": "netbox-panorama",
+                "default_filename_prefix": "netbox",
                 "top_level_menu": True,
             }.get(key, default),
         ):
@@ -216,7 +216,7 @@ class ConnectionTemplateFormTests(TestCase):
                     "name": "Template A",
                     "panorama_url": "https://panorama.example.com",
                     "token_key": "TOKEN_KEY1",
-                    "file_name_prefix": "netbox-panorama123",
+                    "file_name_prefix": "netbox123",
                     "platforms": [platform1.pk],
                     "request_timeout": 100,
                     "description": "Description",
@@ -232,7 +232,7 @@ class ConnectionTemplateFormTests(TestCase):
         self.assertEqual(obj.name, "Template A")
         self.assertEqual(obj.panorama_url, "https://panorama.example.com")
         self.assertEqual(obj.token_key, "TOKEN_KEY1")
-        self.assertEqual(obj.file_name_prefix, "netbox-panorama123")
+        self.assertEqual(obj.file_name_prefix, "netbox123")
         self.assertEqual(obj.platforms.first(), platform1)
         self.assertEqual(obj.request_timeout, 100)
         self.assertEqual(obj.description, "Description")
@@ -252,7 +252,7 @@ class ConnectionTemplateFilterSetTests(TestCase):
             name="Template A",
             panorama_url="https://panorama1.example.com",
             token_key="TOKEN_KEY1",
-            file_name_prefix="netbox-panorama123",
+            file_name_prefix="netbox123",
             request_timeout=100,
             description="Description A",
             comments="Comments A",
@@ -264,7 +264,7 @@ class ConnectionTemplateFilterSetTests(TestCase):
             name="Template B",
             panorama_url="https://panorama2.example.com",
             token_key="TOKEN_KEY1",
-            file_name_prefix="netbox-panorama456",
+            file_name_prefix="netbox456",
             request_timeout=200,
             description="Description B",
             comments="Comments B",

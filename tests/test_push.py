@@ -207,7 +207,7 @@ class PanoramaPushTests(TestCase):
                 (
                     '<response status="success"><result>'
                     "<msg><line>"
-                    "<msg><line>Config loaded from netbox-panorama_firewall1.xml</line></msg>"
+                    "<msg><line>Config loaded from netbox_firewall1.xml</line></msg>"
                     "</line></msg>"
                     "</result></response>"
                 ),
@@ -776,7 +776,7 @@ class PanoramaPushTests(TestCase):
         # pylint: disable=line-too-long
         self.assertEqual(
             panorama_logger.entries[7].response,
-            "Config loaded from netbox-panorama_firewall1.xml /config/devices/entry[@name='localhost.localdomain']/template/entry[@name='Netbox']",
+            "Config loaded from netbox_firewall1.xml /config/devices/entry[@name='localhost.localdomain']/template/entry[@name='Netbox']",
         )
         self.assertEqual(
             panorama_logger.entries[8].response,
@@ -869,7 +869,7 @@ class PanoramaPushTests(TestCase):
         # pylint: disable=line-too-long
         self.assertEqual(
             panorama_logger.entries[7].response,
-            "Config loaded from netbox-panorama_firewall1.xml /config/devices/entry[@name='localhost.localdomain']/template/entry[@name='Netbox']",
+            "Config loaded from netbox_firewall1.xml /config/devices/entry[@name='localhost.localdomain']/template/entry[@name='Netbox']",
         )
         self.assertEqual(
             panorama_logger.entries[8].response,
@@ -967,7 +967,7 @@ class PanoramaPushTests(TestCase):
         # pylint: disable=line-too-long
         self.assertEqual(
             panorama_logger.entries[7].response,
-            "Config loaded from netbox-panorama_firewall1.xml /config/devices/entry[@name='localhost.localdomain']/template/entry[@name='Netbox']",
+            "Config loaded from netbox_firewall1.xml /config/devices/entry[@name='localhost.localdomain']/template/entry[@name='Netbox']",
         )
         self.assertEqual(
             panorama_logger.entries[8].response,
