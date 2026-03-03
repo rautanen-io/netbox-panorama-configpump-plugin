@@ -50,12 +50,13 @@ class ConnectionTemplate(PrimaryModel):
     )
 
     file_name_prefix = models.CharField(
-        max_length=255,
+        max_length=16,
         blank=True,
         help_text=(
             "File name prefix for this template. XML files with this prefix "
             "will be uploaded to Panorama. The format of the file name is "
-            "&lt;prefix&gt;_&lt;device_name&gt;.xml. Leave blank to use default."
+            "&lt;prefix&gt;_&lt;device_name&gt;.xml. Leave blank to use default. "
+            "The total length of the file name must not exceed 32 characters."
         ),
     )
 

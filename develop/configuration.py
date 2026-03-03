@@ -18,7 +18,7 @@ PLUGINS = ["netbox_panorama_configpump_plugin"]
 PLUGINS_CONFIG = {
     "netbox_panorama_configpump_plugin": {
         "default_request_timeout": 60,  # seconds
-        "default_filename_prefix": "netbox-panorama",
+        "default_filename_prefix": "netbox",
         "ignore_ssl_warnings": True,
         "tokens": {
             "PANO1_TOKEN": os.environ.get("PANO1_TOKEN"),

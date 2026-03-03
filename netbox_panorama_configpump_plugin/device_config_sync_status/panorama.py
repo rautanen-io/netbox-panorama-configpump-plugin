@@ -107,10 +107,18 @@ class PanoramaMixin:
         file_name = re.sub(r"\s+", "_", file_name)
         file_name = re.sub(r"[^a-z0-9_\-\.]", "", file_name)
 
-        return (
-            f"{self.connection.connection_template.file_name_prefix}"
-            f"_{file_name}.xml"
+        # Build base name without extension and enforce max length of 32 characters
+        # for the full filename, truncating from the end if necessary.
+        base_name = (
+            f"{self.connection.connection_template.file_name_prefix}" f"_{file_name}"
         )
+        extension = ".xml"
+        max_base_length = 32 - len(extension)
+
+        if len(base_name) > max_base_length:
+            base_name = base_name[:max_base_length]
+
+        return f"{base_name}{extension}"
 
     def _get_connection_config(self) -> dict[str, Any]:
         """Get the connection configuration for a device config sync status."""

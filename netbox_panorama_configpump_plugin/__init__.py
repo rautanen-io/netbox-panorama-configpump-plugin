@@ -29,7 +29,7 @@ class PanoramaConfigPumpConfig(PluginConfig):
     required_settings = []
     default_settings = {
         "default_request_timeout": 60,  # seconds
-        "default_filename_prefix": "netbox-panorama",
+        "default_filename_prefix": "netbox",
         "ignore_ssl_warnings": False,
         "tokens": {},
         "commit_poll_attempts": 30,
