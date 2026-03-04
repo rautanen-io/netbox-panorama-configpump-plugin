@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from importlib import metadata
+
 __author__ = """Veikko Pankakoski"""
 __email__ = "veikko@rautanen.io"
-__version__ = "1.0.6"
+__version__ = metadata.version(__name__)
 
 
 from netbox.plugins import PluginConfig
