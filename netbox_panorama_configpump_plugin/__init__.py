@@ -26,7 +26,7 @@ class PanoramaConfigPumpConfig(PluginConfig):
     author = "rautanen.io"
     author_email = "veikko@rautanenyhtiot.fi"
     min_version = "4.2.5"
-    max_version = "4.4.10"
+    max_version = "4.5.99"
 
     required_settings = []
     default_settings = {
