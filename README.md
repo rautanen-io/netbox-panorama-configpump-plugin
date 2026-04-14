@@ -64,6 +64,7 @@ Refer to [EXAMPLES.md](EXAMPLES.md) for screenshots of each step.
 
 | Plugin Versions | NetBox Versions | Panorama versions |
 |:---------------:|:---------------:|:-----------------:|
+|  1.1.0          | 4.5.x           |  10.2.10, 11.1.6  |
 |  1.0.7 - 1.0.8  | 4.2.5 - 4.4.10  |  10.2.10, 11.1.6  |
 |  1.0.0 - 1.0.6  | 4.2.5 - 4.3.7   |  10.2.10, 11.1.6  |
 
