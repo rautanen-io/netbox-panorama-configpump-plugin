@@ -1,6 +1,6 @@
 {
     "containerEnv": {
-        "NETBOX_VERSION": "4.4.10"
+        "NETBOX_VERSION": "4.5.7"
     },
     "build": {
         "dockerfile": "./Dockerfile",
@@ -46,7 +46,7 @@
     "postCreateCommand": [
         "bash",
         "-c",
-        "poetry config virtualenvs.create true && poetry config virtualenvs.in-project false && poetry install && rm -rf .netbox && git clone https://github.com/netbox-community/netbox.git .netbox && cd .netbox && git checkout tags/v${NETBOX_VERSION:-v4.4.10} -b v${NETBOX_VERSION:-v4.4.10} && cd .. && echo 'Setup complete!'"
+        "poetry config virtualenvs.create true && poetry config virtualenvs.in-project false && poetry install && rm -rf .netbox && git clone https://github.com/netbox-community/netbox.git .netbox && cd .netbox && git checkout tags/v${NETBOX_VERSION:-v4.5.7} -b v${NETBOX_VERSION:-v4.5.7} && cd .. && echo 'Setup complete!'"
     ],
     "customizations": {
         "vscode": {
