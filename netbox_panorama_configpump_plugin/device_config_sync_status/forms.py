@@ -52,7 +52,8 @@ class DeviceConfigSyncStatusForm(NetBoxModelForm):
             'List of <a href="https://en.wikipedia.org/wiki/XPath" target="_blank" rel="noopener noreferrer">XPath</a> '
             "expressions to manually override the automatic deduction. "
             "This applies only if 'Deduce XPaths' is unchecked. "
-            "Enter one XPath per line."
+            "Enter one XPath per line. "
+            "NOTE: XPaths are loaded to Panorama in the order they are listed here, so if there are dependencies between them, ensure they are ordered correctly."
         ),
     )
     connection: DynamicModelChoiceField = DynamicModelChoiceField(
