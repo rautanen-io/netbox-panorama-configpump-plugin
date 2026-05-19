@@ -94,6 +94,14 @@ class PanoramaLogger:
         return sanitize_nested_values(log_entries)
 
 
+def _append_job_progress_detail(message: str, progress_detail: Any) -> str:
+    """Append Panorama job details to a log message as a single line."""
+    detail = extract_strings_from_nested(progress_detail).strip()
+    if detail:
+        return f"{message} — {detail}"
+    return message
+
+
 class PanoramaMixin:
     """Mixin class providing common Panorama-related functionality."""
 
@@ -564,6 +572,8 @@ class PanoramaMixin:
                 if not isinstance(job, dict):
                     continue
 
+                progress_detail = job.get("details")
+
                 job_result = job.get("result")
                 if not isinstance(job_result, str):
                     continue
@@ -572,22 +582,49 @@ class PanoramaMixin:
                 if not isinstance(progress, str):
                     continue
 
-                if job_result.strip().lower() != "ok":
+                normalized_result = job_result.strip().lower()
+                job_status = job.get("status")
+                normalized_status = (
+                    job_status.strip().lower() if isinstance(job_status, str) else ""
+                )
+
+                if normalized_result == "ok":
                     panorama_logger.log(
-                        Status.PENDING,
+                        Status.SUCCESS,
                         http_status_code,
                         call_type,
-                        f"Commit job progress: {progress}%",
+                        _append_job_progress_detail(
+                            f"Commit job '{commit_job_id}' completed successfully",
+                            progress_detail,
+                        ),
                     )
-                    continue
+                    return True
+
+                if (
+                    normalized_result in ("fail", "failed")
+                    or normalized_status == "fin"
+                ):
+                    panorama_logger.log(
+                        Status.FAILURE,
+                        http_status_code,
+                        call_type,
+                        _append_job_progress_detail(
+                            f"Commit job '{commit_job_id}' failed (result: {job_result.strip()})",
+                            progress_detail,
+                        ),
+                    )
+                    return False
 
                 panorama_logger.log(
-                    Status.SUCCESS,
+                    Status.PENDING,
                     http_status_code,
                     call_type,
-                    f"Commit job '{commit_job_id}' completed successfully",
+                    _append_job_progress_detail(
+                        f"Commit job progress: {progress}%",
+                        progress_detail,
+                    ),
                 )
-                return True
+                continue
 
             panorama_logger.log(
                 Status.FAILURE,
