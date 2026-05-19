@@ -125,6 +125,14 @@
                 {% else %}
                 <span class="text-muted">None</span>
                 {% endif %}
+                {% if not object.deduce_xpaths %}
+                <div class="info-tooltip mt-2">
+                    ⓘ
+                    <span class="tooltip-text">
+                    NOTE: XPaths are loaded to Panorama in the order they are listed here, so if there are dependencies between them, ensure they are ordered correctly.
+                    </span>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
