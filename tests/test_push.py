@@ -975,7 +975,14 @@ class PanoramaPushTests(TestCase):
         )
         self.assertEqual(
             panorama_logger.entries[9].response,
-            "Commit job '70' completed successfully",
+            (
+                "Commit job '70' completed successfully — "
+                "Configuration committed successfully "
+                "Local configuration size: 9 KB "
+                "Predefined configuration size: 14 MB "
+                "Total configuration size(local, predefined): 14 MB "
+                "Maximum recommended configuration size: 120 MB (11% configured)"
+            ),
         )
         self.assertEqual(
             panorama_logger.entries[10].response,
