@@ -72,9 +72,15 @@ class ConfigDiffEditor {
     }
 
     initializeMonacoEditor() {
+        const vsPath = window.MONACO_VS_BASE;
+        if (!vsPath) {
+            console.error('MONACO_VS_BASE is not set; cannot load Monaco Editor');
+            return;
+        }
+
         require.config({
             paths: {
-                'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs'
+                'vs': vsPath
             }
         });
 
@@ -447,27 +453,27 @@ class ConfigDiffEditor {
         });
 
         if (node.attributes && node.attributes.length > 0) {
-            result['@attributes'] = {};
+            result._attributes = {};
             Array.from(node.attributes).forEach((attr) => {
-                result['@attributes'][attr.name] = attr.value;
+                result._attributes[attr.name] = attr.value;
             });
         }
 
         if (children.length === 0) {
             const textContent = node.textContent.trim();
             if (textContent) {
-                if (result['@attributes']) {
+                if (result._attributes) {
                     result['#text'] = textContent;
                     return result;
                 }
                 return textContent;
             }
-            return result['@attributes'] ? result : null;
+            return result._attributes ? result : null;
         }
 
         if (children.length === 1 && children[0].nodeType === Node.TEXT_NODE) {
             const text = children[0].textContent.trim();
-            if (result['@attributes']) {
+            if (result._attributes) {
                 if (text) {
                     result['#text'] = text;
                 }
@@ -499,8 +505,8 @@ class ConfigDiffEditor {
             }
         });
 
-        if (result['@attributes']) {
-            return Object.assign({}, result['@attributes'], childObj);
+        if (result._attributes) {
+            return Object.assign({}, result._attributes, childObj);
         }
 
         return childObj;

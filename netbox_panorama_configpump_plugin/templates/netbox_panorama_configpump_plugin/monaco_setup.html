@@ -1,0 +1,18 @@
+{% load static %}
+{# Monaco Editor AMD loader (must run before loader.js) #}
+<script>
+(function () {
+    const staticVs = "{% static 'netbox_panorama_configpump_plugin/js/vendor/monaco/vs' %}";
+    const vsUrl = staticVs.startsWith('http')
+        ? staticVs
+        : new URL(staticVs, window.location.origin).href;
+    window.MONACO_VS_BASE = vsUrl.replace(/\/$/, '');
+
+    // Parent of the "vs" directory; used by workerMain.js inside web workers.
+    const vsParent = window.MONACO_VS_BASE.replace(/\/vs\/?$/, '');
+    window.MonacoEnvironment = {
+        baseUrl: vsParent.endsWith('/') ? vsParent : vsParent + '/'
+    };
+})();
+</script>
+<script src="{% static 'netbox_panorama_configpump_plugin/js/vendor/monaco/vs/loader.js' %}"></script>
