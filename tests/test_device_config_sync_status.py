@@ -5,6 +5,7 @@
 
 import datetime
 import uuid
+from unittest.mock import patch
 
 from core.choices import JobStatusChoices
 from core.models import Job
@@ -164,22 +165,29 @@ class DeviceConfigSyncStatusModelTests(TestDeviceConfigSyncStatusMixing):
         obj.save()
         self.assertFalse(obj.config_render_ok)
 
-    def test_signals_trigger_diffs_and_config_render_ok(self):
+    @patch(
+        "netbox_panorama_configpump_plugin.signals.RecomputeDeviceConfigSyncStatusJobRunner.enqueue"
+    )
+    def test_signals_enqueue_recompute_jobs(self, enqueue_mock):
         obj = DeviceConfigSyncStatus.objects.create(
             device=self.device1,
             connection=self.connection1,
         )
 
-        # Device change:
+        # Manual status save (not one of the monitored signal senders):
         self.config_template.template_code = "<root></root>"
         obj.save()
-        self.assertTrue(obj.config_render_ok)
 
         # ConfigTemplate change:
         self.config_template.template_code = "<root></rot>"
         self.config_template.save()
-        obj.refresh_from_db()
-        self.assertFalse(obj.config_render_ok)
+
+        self.assertEqual(enqueue_mock.call_count, 1)
+        enqueue_mock.assert_any_call(
+            instance=obj,
+            name=f"Recompute config sync status for {obj.device.name}",
+            device_config_sync_status_id=obj.id,
+        )
 
 
 class ConnectionViewTests(TestDeviceConfigSyncStatusMixing):

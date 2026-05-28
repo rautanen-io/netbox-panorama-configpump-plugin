@@ -135,3 +135,34 @@ class PullDeviceConfigJobRunner(JobRunner):
         _update_device_config_sync_status(
             device_config_sync_status, pull_time=timezone.now()
         )
+
+
+class RecomputeDeviceConfigSyncStatusJobRunner(JobRunner):
+    """Job runner for recomputing rendered config status and diffs."""
+
+    # pylint: disable=too-few-public-methods
+    class Meta:
+        """Meta options for RecomputeDeviceConfigSyncStatusJobRunner."""
+
+        name = "Recompute Device Config Sync Status"
+
+    def run(self, *args: Any, **kwargs: Any) -> None:
+        device_config_sync_status_id = kwargs.get("device_config_sync_status_id")
+        if not device_config_sync_status_id:
+            raise ValueError("device_config_sync_status_id is required")
+
+        device_config_sync_status = DeviceConfigSyncStatus.objects.filter(
+            id=device_config_sync_status_id
+        ).first()
+        if not device_config_sync_status:
+            raise ValueError("Device config sync status not found")
+
+        # config_render_ok and diffs are updated by save
+        device_config_sync_status.save(
+            update_fields=[
+                "config_render_ok",
+                "lines_added",
+                "lines_removed",
+                "lines_changed",
+            ]
+        )
