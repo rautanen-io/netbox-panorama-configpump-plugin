@@ -1,0 +1,71 @@
+#yaml-path-status {
+    font-family: var(--bs-font-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+    font-size: 0.85rem;
+    min-height: 1.5rem;
+    color: var(--bs-secondary-color, #6c757d);
+    word-break: break-all;
+}
+
+.yaml-path-segment {
+    color: var(--bs-body-color, inherit);
+    cursor: pointer;
+}
+
+.yaml-path-segment:hover {
+    text-decoration: underline;
+    opacity: 0.85;
+}
+
+.yaml-path-segment-root {
+    font-weight: 600;
+}
+
+.yaml-path-segment-leaf {
+    color: var(--bs-primary, #0d6efd);
+}
+
+.yaml-path-separator {
+    color: var(--bs-secondary-color, #6c757d);
+    opacity: 0.7;
+}
+
+#format-error-banner {
+    font-size: 0.875rem;
+}
+
+/* Current change / path-jump target line */
+.config-diff-nav-line {
+    background: rgba(13, 110, 253, 0.18) !important;
+    outline: 2px solid var(--bs-primary, #0d6efd);
+    outline-offset: -2px;
+}
+
+.config-diff-nav-glyph {
+    background: var(--bs-primary, #0d6efd);
+    margin-left: 3px;
+    width: 4px !important;
+}
+
+/* Deletions sit on Monaco's red diff background — use contrasting amber */
+.config-diff-nav-line-deleted {
+    background: rgba(255, 193, 7, 0.45) !important;
+    outline: 2px solid #fd7e14;
+    outline-offset: -2px;
+}
+
+.config-diff-nav-glyph-deleted {
+    background: #fd7e14;
+    margin-left: 3px;
+    width: 4px !important;
+}
+
+/* Inline view: deleted lines are Monaco view-zones (.view-lines.line-delete) */
+.monaco-editor .view-lines.line-delete.config-diff-nav-inline-deleted,
+.monaco-editor .config-diff-nav-inline-deleted.view-lines.line-delete,
+.monaco-editor .config-diff-nav-inline-deleted .view-lines.line-delete,
+.monaco-editor .config-diff-nav-inline-deleted {
+    background-color: rgba(255, 193, 7, 0.5) !important;
+    outline: 2px solid #fd7e14 !important;
+    outline-offset: -2px;
+    box-shadow: inset 3px 0 0 #fd7e14;
+}

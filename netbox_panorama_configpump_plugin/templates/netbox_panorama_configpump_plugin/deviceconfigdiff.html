@@ -5,17 +5,22 @@
 
 {% block title %}{{ device }} - Panorama Config Diff{% endblock %}
 
+{% block head %}
+    <link rel="stylesheet" href="{% static 'netbox_panorama_configpump_plugin/css/config-diff.css' %}">
+{% endblock %}
+
 {% block content %}
     <div class="row">
         <div class="col col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <div class="d-flex align-items-center w-100">
+                    <div class="d-flex align-items-center w-100 flex-wrap gap-2">
                         <h5 class="card-title mb-0 flex-grow-1">
                             <i class="mdi mdi-file-compare"></i>
                             Configuration Differences
                         </h5>
-                        <div class="d-flex gap-2">
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            {% include 'netbox_panorama_configpump_plugin/diff_controls.html' %}
                             {% include 'netbox_panorama_configpump_plugin/theme_dropdown.html' %}
                             {% include 'netbox_panorama_configpump_plugin/view_toggle_button.html' %}
                             {% include 'netbox_panorama_configpump_plugin/format_toggle_button.html' %}
@@ -33,6 +38,8 @@
                         <span class="text-danger"><i class="mdi mdi-alert"></i> Pulled configuration from Panorama contains invalid XML</span>
                     </div>
                     {% endif %}
+                    <div id="format-error-banner" class="alert alert-warning py-1 px-2 mb-2" style="display: none;" role="alert"></div>
+                    <div id="yaml-path-status" class="mb-2" aria-live="polite"></div>
                     <div class="row mb-2">
                         <div class="col-md-6">
                             <h6 class="text-muted">Pulled configuration from Panorama</h6>
@@ -65,6 +72,8 @@
             window.jsyaml = jsyaml;
         }
     </script>
+    <script src="{% static 'netbox_panorama_configpump_plugin/js/config-diff-utils.js' %}"></script>
+    <script src="{% static 'netbox_panorama_configpump_plugin/js/config-diff-yaml-path.js' %}"></script>
     <script src="{% static 'netbox_panorama_configpump_plugin/js/config-diff.js' %}"></script>
 
 {% endblock %}
