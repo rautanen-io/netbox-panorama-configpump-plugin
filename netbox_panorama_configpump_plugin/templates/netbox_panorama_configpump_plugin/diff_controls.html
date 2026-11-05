@@ -1,0 +1,18 @@
+
+<!-- Diff navigation and hide-unchanged controls -->
+<div class="btn-group btn-group-sm" role="group" aria-label="Change navigation">
+    <button id="prev-change-btn" type="button" class="btn btn-outline-secondary" title="Previous change (Alt+↑)">
+        <i class="mdi mdi-chevron-up"></i>
+    </button>
+    <button id="next-change-btn" type="button" class="btn btn-outline-secondary" title="Next change (Alt+↓)">
+        <i class="mdi mdi-chevron-down"></i>
+    </button>
+</div>
+<button id="toggle-hide-unchanged-btn" type="button" class="btn btn-sm btn-outline-secondary">
+    <i class="mdi mdi-page-layout-body"></i>
+    <span>Hide unchanged</span>
+</button>
+<label class="d-flex align-items-center gap-1 mb-0 small text-muted" for="context-line-count-input" title="Context lines around changes when hiding unchanged">
+    <span>Context</span>
+    <input id="context-line-count-input" type="number" min="0" step="1" class="form-control form-control-sm" style="width: 4rem;" value="5">
+</label>
